@@ -250,11 +250,11 @@
         <canvas id="fig-string" class="fig-canvas strip" aria-label="A row of 47 beads on a string. Drag a bead to pluck it."></canvas>
         <div class="fig-controls">
           <button id="fig-str-pluck" class="btn small" type="button">Pluck</button>
-          <label class="check"><input id="fig-str-drive" type="checkbox" /> Drive left end</label>
+          <label class="check"><input id="fig-str-drive" type="checkbox" checked /> Drive left end</label>
           <label class="slider"><span>Damping</span><input id="fig-str-damp" type="range" min="0" max="1" step="0.01" value="0.2" /><output id="fig-str-damp-out">0.20</output></label>
         </div>
       </div>
-      <figcaption>Figure 3 · Drag a bead, or turn on the drive and watch the reflections interfere.</figcaption>
+      <figcaption>Figure 3 · The left end is driven: watch the reflections interfere, drag a bead, or turn the drive off and let the string settle.</figcaption>
     </figure>
     <p>Grabbing a brush in 3D needed one more trick. The brushes are a few pixels wide, so instead of asking the ray to hit one, the code finds where the pointer's ray passes closest to the whole row of brushes, and accepts anything within a brush-width or so (as long as the casing isn't in the way). Dragging then happens on a vertical plane facing the camera, so up always means up.</p>
     <h2 id="shapes">Wave shapes have consequences</h2>
