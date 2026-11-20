@@ -47,6 +47,12 @@ function halftoneFigure() {
   const lightOut = document.getElementById('fig-ht-light-out');
   const dotOut = document.getElementById('fig-ht-dot-out');
 
+  // Zoom and pan, as a magnifier over the printed page: `k` is the zoom and
+  // (cx, cy) the point of the figure at the centre of the view, as fractions
+  // of its width. The sphere is redrawn at every zoom, so the dots stay sharp.
+  const view = { k: 1, cx: 0.5, cy: 0.5 };
+  const K_MAX = 8;
+
   function draw() {
     const size = Math.max(1, Math.round(cv.clientWidth * DPR));
     if (cv.width !== size) cv.width = cv.height = size;
@@ -75,9 +81,13 @@ function halftoneFigure() {
       return fu * fu + fv * fv <= r * r;
     };
 
+    const zk = view.k;
+    const ox = view.cx * size - size / 2 / zk;
+    const oy = view.cy * size - size / 2 / zk;
     for (let y = 0; y < size; y++) {
+      const py = oy + (y + 0.5) / zk;
       for (let x = 0; x < size; x++) {
-        const px = x + 0.5, py = y + 0.5;
+        const px = ox + (x + 0.5) / zk;
         const dx = (px - c) / R, dy = (py - c) / R;
         const r2 = dx * dx + dy * dy;
         let col = PAPER; // lighter than the page so the ink outline reads
@@ -120,6 +130,85 @@ function halftoneFigure() {
   };
   [lightIn, dotIn, inkIn].forEach((el) => el.addEventListener('input', redraw));
   new ResizeObserver(redraw).observe(cv);
+
+  /* ---------- pinch, drag and double-tap to zoom ---------- */
+  const clampView = () => {
+    view.k = Math.min(K_MAX, Math.max(1, view.k));
+    const m = 0.5 / view.k;
+    view.cx = Math.min(1 - m, Math.max(m, view.cx));
+    view.cy = Math.min(1 - m, Math.max(m, view.cy));
+    // Zoomed in, one finger pans the figure; zoomed out, it scrolls the page.
+    cv.classList.toggle('zoomed', view.k > 1.001);
+    redraw();
+  };
+  // Screen point, as fractions of the canvas, relative to its centre.
+  const frac = (e) => {
+    const r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width - 0.5, y: (e.clientY - r.top) / r.height - 0.5 };
+  };
+  // Zoom by `f`, keeping the figure point under screen point `s` in place.
+  const zoomAt = (s, f) => {
+    const k = Math.min(K_MAX, Math.max(1, view.k * f));
+    view.cx += s.x / view.k - s.x / k;
+    view.cy += s.y / view.k - s.y / k;
+    view.k = k;
+    clampView();
+  };
+  const panBy = (dx, dy) => {
+    view.cx -= dx / view.k;
+    view.cy -= dy / view.k;
+    clampView();
+  };
+
+  const pts = new Map(); // pointerId -> last screen point
+  let lastTap = null;
+  let moved = false;
+  const pair = () => {
+    const [a, b] = [...pts.values()];
+    return { mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, dist: Math.hypot(a.x - b.x, a.y - b.y) };
+  };
+  cv.addEventListener('pointerdown', (e) => {
+    if (e.button > 0) return;
+    pts.set(e.pointerId, frac(e));
+    moved = pts.size > 1;
+    try { cv.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
+  });
+  cv.addEventListener('pointermove', (e) => {
+    const prev = pts.get(e.pointerId);
+    if (!prev) return;
+    const before = pts.size === 2 ? pair() : null;
+    const p = frac(e);
+    pts.set(e.pointerId, p);
+    if (before) {
+      const after = pair();
+      if (before.dist > 0) zoomAt(after.mid, after.dist / before.dist);
+      panBy(after.mid.x - before.mid.x, after.mid.y - before.mid.y);
+    } else if (pts.size === 1 && view.k > 1.001) {
+      panBy(p.x - prev.x, p.y - prev.y);
+    }
+    if (Math.hypot(p.x - prev.x, p.y - prev.y) > 0.002) moved = true;
+  });
+  const lift = (e) => {
+    if (!pts.delete(e.pointerId)) return;
+    if (e.type !== 'pointerup' || moved || pts.size) return;
+    // Double-tap (or double-click) toggles between zoomed in and out.
+    const s = frac(e), now = performance.now();
+    if (lastTap && now - lastTap.t < 320 && Math.hypot(s.x - lastTap.s.x, s.y - lastTap.s.y) < 0.06) {
+      if (view.k > 1.001) Object.assign(view, { k: 1, cx: 0.5, cy: 0.5 }), clampView();
+      else zoomAt(s, 3);
+      lastTap = null;
+    } else lastTap = { s, t: now };
+  };
+  cv.addEventListener('pointerup', lift);
+  cv.addEventListener('pointercancel', lift);
+  // A trackpad pinch arrives as a ctrl+wheel; a plain wheel still scrolls the page.
+  cv.addEventListener('wheel', (e) => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    zoomAt(frac(e), Math.exp(-e.deltaY * 0.01));
+  }, { passive: false });
+  // Safari's own pinch gesture would zoom the whole page.
+  cv.addEventListener('gesturestart', (e) => e.preventDefault());
 }
 
 /* ============================================================

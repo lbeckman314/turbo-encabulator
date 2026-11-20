@@ -475,7 +475,9 @@ kbd {
   background: #080d1a;
   touch-action: none;
 }
-.fig-canvas.square { max-width: 340px; aspect-ratio: 1; margin: 0 auto; cursor: default; touch-action: auto; background: rgb(31, 42, 70); }
+.fig-canvas.square { max-width: 340px; aspect-ratio: 1; margin: 0 auto; cursor: zoom-in; touch-action: pan-x pan-y; background: rgb(31, 42, 70); }
+.fig-canvas.square.zoomed { cursor: grab; touch-action: none; }
+.fig-canvas.square.zoomed:active { cursor: grabbing; }
 .fig-canvas.strip { height: 180px; cursor: grab; }
 .fig-controls {
   display: flex;
