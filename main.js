@@ -51,7 +51,13 @@ controls.autoRotateSpeed = 0.45;
 // fingers pinch to zoom (and twist to turn) instead.
 controls.enablePan = false;
 controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
-controls.addEventListener('start', () => (controls.autoRotate = false));
+controls.addEventListener('start', () => {
+  controls.autoRotate = false;
+  // A tapped part's tooltip would otherwise stay put while the part spins
+  // away. (A mouse's hover tooltip comes straight back on the next frame.)
+  showTip(null);
+  pointer.dirty = true;
+});
 
 const isNarrow = () => window.innerWidth < 720;
 const CAM_DIR = new THREE.Vector3(-0.58, 0.3, 0.76).normalize();
@@ -1158,11 +1164,24 @@ function brushRayHit(firstHit) {
   return { i: brushIndexAt(onRow), point: onRow.clone() };
 }
 
-function pick(x, y) {
+function pickAt(x, y) {
   rayFrom(x, y);
   const hit = raycaster.intersectObjects(pickables, false)[0];
   if (brushRayHit(hit)) return partById.brushes;
   return hit ? partById[hit.object.userData.part] : null;
+}
+// A fingertip is far less precise than a cursor, so a touch that misses
+// tries a ring of nearby points too: the centre first, then outward.
+const TOUCH_SLOP = [];
+for (const r of [8, 14]) for (let a = 0; a < 8; a++) TOUCH_SLOP.push([r * Math.cos((a * Math.PI) / 4), r * Math.sin((a * Math.PI) / 4)]);
+function pick(x, y, touch = false) {
+  const p = pickAt(x, y);
+  if (p || !touch) return p;
+  for (const [dx, dy] of TOUCH_SLOP) {
+    const q = pickAt(x + dx, y + dy);
+    if (q) return q;
+  }
+  return null;
 }
 function setHovered(p) {
   if (p === hovered) return;
@@ -1242,14 +1261,21 @@ canvas.addEventListener('pointermove', (e) => {
   pointer.dirty = true;
   pointer.inside = true;
 });
-canvas.addEventListener('pointerleave', () => {
-  if (grab) return;
+// Touch pointers "leave" right after every lift (a finger can't hover), which
+// would hide a tapped part's tooltip the moment it appeared.
+canvas.addEventListener('pointerleave', (e) => {
+  if (grab || e.pointerType !== 'mouse') return;
   pointer.inside = false;
   showTip(null);
 });
 
 let downAt = null;
 canvas.addEventListener('pointerdown', (e) => (downAt = { x: e.clientX, y: e.clientY }));
+// A touch anywhere off the machine (the controls card, the write-up) dismisses
+// a tapped part's tooltip; a mouse's hover tooltip already follows the cursor.
+window.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'mouse' && e.target !== canvas) showTip(null);
+});
 function endGrab(e) {
   if (!grab) return false;
   if (!grab.moved) {
@@ -1267,7 +1293,7 @@ canvas.addEventListener('pointercancel', endGrab);
 canvas.addEventListener('pointerup', (e) => {
   if (endGrab(e)) return;
   if (e.pointerType === 'mouse' || !downAt) return;
-  if (Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8) showTip(pick(e.clientX, e.clientY), e.clientX, e.clientY - 120);
+  if (Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8) showTip(pick(e.clientX, e.clientY, true), e.clientX, e.clientY - 120);
 });
 
 /* ============================================================
