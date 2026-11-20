@@ -123,9 +123,19 @@ const camHome = (at) => {
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(pts, 3));
-  scene.add(new THREE.Points(g, new THREE.PointsMaterial({
+  const mat = new THREE.PointsMaterial({
     color: PAL.cream, size: 1.4 * DPR, sizeAttenuation: false, transparent: true, opacity: 0.55, depthWrite: false,
-  })));
+  });
+  // The stars thin out over the bottom of the hero, so space fades into the
+  // page instead of stopping at an edge. (Only the stars: the machine can
+  // reach down there too.) gl_FragCoord.y counts device pixels from the bottom.
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uFade = { value: 140 * DPR };
+    shader.fragmentShader = shader.fragmentShader
+      .replace('void main() {', 'uniform float uFade;\nvoid main() {')
+      .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( diffuse, opacity * smoothstep(0.0, uFade, gl_FragCoord.y) );');
+  };
+  scene.add(new THREE.Points(g, mat));
 }
 
 /* ============================================================

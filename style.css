@@ -30,6 +30,11 @@ html, body {
   min-height: 700px;
   overflow: hidden;
 }
+/* Clip sideways only, so the card's shadow can fall softly onto the page
+   below instead of being cut off in a hard line. */
+@supports (overflow: clip) {
+  .hero { overflow: visible; overflow-x: clip; }
+}
 
 #scene {
   position: absolute;
