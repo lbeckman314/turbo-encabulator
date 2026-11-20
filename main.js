@@ -46,17 +46,23 @@ controls.maxDistance = 32;
 controls.maxPolarAngle = Math.PI * 0.62;
 controls.autoRotate = !reduceMotion;
 controls.autoRotateSpeed = 0.45;
+// No panning: it would slide the machine off the spot it's fitted to. Two
+// fingers pinch to zoom (and twist to turn) instead.
+controls.enablePan = false;
+controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
 controls.addEventListener('start', () => (controls.autoRotate = false));
 
 const isNarrow = () => window.innerWidth < 720;
 const CAM_DIR = new THREE.Vector3(-0.58, 0.3, 0.76).normalize();
 // The part of the hero the machine should sit in, in hero pixels: clear of
-// the title and (unless it's hidden) the control card.
-function freeRect() {
+// the title and the control card. `at` can describe the card as it will be
+// (collapsed, top edge in client px) so we can head there while it animates.
+function freeRect(at = {}) {
   const { w, h } = heroSize();
   const hb = hero.getBoundingClientRect();
-  const card = hero.querySelector('.card').getBoundingClientRect();
-  const collapsed = hero.classList.contains('focus');
+  const rect = hero.querySelector('.card').getBoundingClientRect();
+  const card = { top: at.cardTop ?? rect.top, right: rect.right };
+  const collapsed = at.collapsed ?? hero.classList.contains('focus');
   // always below the big title
   const r = { x0: 0, y0: document.getElementById('title').getBoundingClientRect().bottom - hb.top, x1: w, y1: h };
   let pad = 40;
@@ -79,7 +85,7 @@ function freeRect() {
 // reaches further down.
 const FIT_W = 3.0;
 const fitH = () => (isNarrow() ? 2.6 : 3.05);
-const camHome = () => {
+const camHome = (at) => {
   const { w, h } = heroSize();
   const aspect = w / h;
   camera.fov = aspect < 0.8 ? 48 : 35;
@@ -87,7 +93,7 @@ const camHome = () => {
   const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   // Distance at which the machine fits the free rect (1 world unit spans
   // h / (2 · dist · halfH) pixels).
-  const f = freeRect();
+  const f = freeRect(at);
   const fw = Math.max(80, f.x1 - f.x0), fh = Math.max(80, f.y1 - f.y0);
   const dist = Math.max(7, (FIT_W * h) / (halfH * fw), (fitH() * h) / (halfH * fh));
   const target = new THREE.Vector3(0, -0.45, 0);
@@ -1134,23 +1140,53 @@ canvas.addEventListener('pointerup', (e) => {
 /* ============================================================
  * Resize
  * ========================================================== */
+// Fitting = a view offset (where on screen the machine's center sits) plus a
+// camera distance (how big it is). Both ease together, so the machine glides
+// and zooms in one motion instead of snapping to the new center first.
+const view = { ox: 0, oy: 0 };
+let fitTween = null;
+function applyView() {
+  const { w, h } = heroSize();
+  camera.setViewOffset(w, h, view.ox, view.oy, w, h);
+  camera.updateProjectionMatrix();
+}
+const setDistance = (d) => camera.position.sub(controls.target).setLength(d).add(controls.target);
+const FIT_MS = 480;
+function fit({ smooth = false, at } = {}) {
+  const { w, h } = heroSize();
+  const { dist, f } = camHome(at);
+  const ox = w / 2 - (f.x0 + f.x1) / 2, oy = h / 2 - (f.y0 + f.y1) / 2;
+  fitTween?.pause();
+  if (!smooth) {
+    view.ox = ox;
+    view.oy = oy;
+    applyView();
+    return;
+  }
+  // Keep the user's viewing angle; only the distance changes.
+  const tw = { ox: view.ox, oy: view.oy, d: camera.position.distanceTo(controls.target) };
+  fitTween = animate(tw, {
+    ox, oy, d: dist,
+    duration: reduceMotion ? 0 : FIT_MS,
+    ease: 'inOutQuad',
+    onUpdate: () => {
+      view.ox = tw.ox;
+      view.oy = tw.oy;
+      applyView();
+      setDistance(tw.d);
+    },
+  });
+}
+
 let fitted = false;
 function resize() {
   const { w, h } = heroSize();
   renderer.setSize(w, h, false);
   renderer.getDrawingBufferSize(U.uView.value);
   camera.aspect = w / h;
-  // Shift the view so the machine sits in the middle of the free rect, and
-  // dolly to the distance that fits it there (keeping the user's angle).
-  const { dist, f } = camHome();
-  camera.setViewOffset(w, h, w / 2 - (f.x0 + f.x1) / 2, h / 2 - (f.y0 + f.y1) / 2, w, h);
-  camera.updateProjectionMatrix();
   sizeScope();
   labels.forEach((l) => (l.w = 0)); // re-measure: label size follows the layout
-  if (fitted && controls.enabled) {
-    const pos = camera.position.clone().sub(controls.target).setLength(dist).add(controls.target);
-    animate(camera.position, { x: pos.x, y: pos.y, z: pos.z, duration: 550, ease: 'inOutQuad' });
-  }
+  fit({ smooth: fitted && controls.enabled });
   fitted = true;
 }
 window.addEventListener('resize', resize);
@@ -1162,23 +1198,32 @@ const cardBody = $('#card-body');
 function setFocus(on) {
   if (on === hero.classList.contains('focus')) return;
   finishIntro();
+  // Work out where the card's top edge will end up (it's pinned at the
+  // bottom), so the machine can start moving now, alongside the card.
+  const card = hero.querySelector('.card').getBoundingClientRect();
+  const bodyNow = cardBody.getBoundingClientRect().height;
+  const bodyFull = cardBody.firstElementChild.scrollHeight;
+  const cardTop = card.bottom - (card.height - bodyNow + (on ? 0 : bodyFull));
   hero.classList.toggle('focus', on);
+  fit({ smooth: true, at: { collapsed: on, cardTop } });
   focusBtn.setAttribute('aria-expanded', String(!on));
   focusBtn.setAttribute('aria-label', on ? 'Show controls' : 'Hide controls');
   focusBtn.title = on ? 'Show controls (F)' : 'Hide controls (F)';
   showTip(null);
-  // Re-fit the machine once the card has finished resizing.
-  if (reduceMotion) requestAnimationFrame(resize);
 }
-cardBody.addEventListener('transitionend', (e) => {
-  if (e.target === cardBody && e.propertyName === 'grid-template-rows') resize();
-});
 focusBtn.addEventListener('click', () => setFocus(!hero.classList.contains('focus')));
 
-// In a scrolling post, the wheel should scroll the page. Zoom only with
-// ctrl/⌘ + wheel (which is also what trackpad pinch sends).
+// The wheel zooms over the machine and scrolls the page over the card, title
+// and buttons (they sit above the canvas, so their wheel events never reach
+// it). While the hero is partly scrolled away, or the page is still moving
+// (trackpad momentum on the way back up from the write-up), the wheel keeps
+// scrolling instead of suddenly turning into zoom.
+let lastScroll = 0;
+window.addEventListener('scroll', () => (lastScroll = performance.now()), { passive: true });
 window.addEventListener('wheel', (e) => {
-  if (e.target === canvas && !e.ctrlKey && !e.metaKey) e.stopPropagation();
+  if (e.target !== canvas || e.ctrlKey || e.metaKey) return; // ctrl/⌘ = trackpad pinch: always zoom
+  const scrolledAway = hero.getBoundingClientRect().top < -1;
+  if (scrolledAway || performance.now() - lastScroll < 300) e.stopPropagation();
 }, { capture: true });
 
 // Don't spend frames on the hero once it has scrolled out of view.

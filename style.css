@@ -585,17 +585,18 @@ kbd {
   transition: border-color 0.2s, color 0.2s;
 }
 .chev:hover { border-color: var(--gold); color: var(--gold); }
-.chev svg { transition: transform 0.35s ease; }
+.chev svg { transition: transform 0.48s cubic-bezier(0.455, 0.03, 0.515, 0.955); }
 .hero.focus .chev svg { transform: rotate(180deg); }
 /* grid-rows 1fr -> 0fr animates the body's height without measuring it */
 .card-body {
   display: grid;
   grid-template-rows: 1fr;
-  transition: grid-template-rows 0.35s ease;
+  /* same length and easing as the camera's glide (FIT_MS in main.js) */
+  transition: grid-template-rows 0.48s cubic-bezier(0.455, 0.03, 0.515, 0.955);
 }
 .card-inner { min-height: 0; overflow: hidden; }
 .hero.focus .card-body { grid-template-rows: 0fr; }
-.hero.focus .card-inner { visibility: hidden; transition: visibility 0s 0.35s; }
+.hero.focus .card-inner { visibility: hidden; transition: visibility 0s 0.48s; }
 
 @media (prefers-reduced-motion: reduce) {
   .card-body,
