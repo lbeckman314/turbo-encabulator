@@ -687,11 +687,20 @@ kbd {
   color: var(--muted);
   white-space: nowrap;
 }
-.timeline a {
+.timeline a { color: inherit; text-decoration: none; }
+.timeline a:hover {
   color: inherit;
   text-decoration: underline;
-  text-decoration-color: rgba(240, 234, 210, 0.3);
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
-.timeline a:hover { color: inherit; text-decoration-color: currentColor; }
+/* To scale (timeline.js): rows are spaced by the time between them, and the
+   line, decade ticks and dots are drawn in an SVG behind them. */
+.timeline.scaled { position: relative; }
+.timeline.scaled li { position: absolute; left: 0; right: 0; }
+.timeline.scaled li::before,
+.timeline.scaled li::after { display: none; }
+.timeline .tl-axis { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+.tl-axis .tl-line { stroke: var(--line); stroke-width: 2; }
+.tl-axis .tl-tick { stroke: rgba(240, 234, 210, 0.28); stroke-width: 1.5; }
+.tl-axis .tl-dot { fill: var(--gold); stroke: var(--bg); stroke-width: 4; paint-order: stroke; }

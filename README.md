@@ -44,6 +44,7 @@ Besides ordinary Markdown (including tables and raw HTML such as `<var>`), `post
 | `main.js`    | Scene, comic shaders (halftone fill and ink outline), parts, anime.js timelines, UI |
 | `string.js`  | The brush-string simulation, shared by the machine and Figure 3                     |
 | `figures.js` | The write-up's interactive figures: the halftone sphere and the flattened string    |
+| `timeline.js` | Lays the write-up's timeline out to scale (without it, a plain list)                |
 | `style.css`  | Styles for the machine and the write-up                                             |
 | `images/`    | The two pages of the handbook sheet                                                 |
 
