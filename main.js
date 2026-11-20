@@ -1312,6 +1312,57 @@ canvas.addEventListener('pointerup', (e) => {
   if (Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8) showTip(pick(e.clientX, e.clientY, true), e.clientX, e.clientY - 120);
 });
 
+/* ---------- keyboard and screen readers: step through the parts ----------
+ * With the machine focused (Tab to it, or click it), the arrow keys move the
+ * gold outline and tooltip from part to part; the tooltip is a live region,
+ * so each part's name and description is read out. A visually hidden list
+ * of every part gives screen readers the same information up front. */
+{
+  const list = document.createElement('ul');
+  list.className = 'sr-only';
+  list.setAttribute('aria-label', 'Parts of the machine');
+  for (const p of parts) {
+    const li = document.createElement('li');
+    li.textContent = `${p.name}: ${p.info}`;
+    list.append(li);
+  }
+  canvas.after(list);
+}
+canvas.tabIndex = 0;
+let tourAt = -1;
+const tourParts = () => parts.filter((p) => p.group.visible);
+function showTourPart() {
+  const list = tourParts();
+  const p = list[tourAt];
+  if (!p) return;
+  machine.updateMatrixWorld();
+  const r = canvas.getBoundingClientRect();
+  const a = toScreen(tmp.copy(p.anchor).applyMatrix4(p.group.matrixWorld), r.width, r.height);
+  showTip(p, r.left + a.x, r.top + a.y);
+}
+canvas.addEventListener('keydown', (e) => {
+  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+  if (step) {
+    e.preventDefault(); // don't scroll the page
+    finishIntro();
+    controls.autoRotate = false; // so the tooltip stays on its part
+    const n = tourParts().length;
+    tourAt = tourAt < 0 ? (step > 0 ? 0 : n - 1) : (tourAt + step + n) % n;
+    showTourPart();
+  } else if (e.key === 'Escape' && tourAt >= 0) {
+    e.stopPropagation(); // just end the tour, don't also show the controls
+    tourAt = -1;
+    showTip(null);
+  }
+});
+canvas.addEventListener('blur', () => {
+  if (tourAt < 0) return;
+  tourAt = -1;
+  showTip(null);
+});
+// A mouse or finger on the machine takes over from the keyboard tour.
+canvas.addEventListener('pointerdown', () => (tourAt = -1));
+
 /* ============================================================
  * Resize
  * ========================================================== */

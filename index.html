@@ -31,7 +31,7 @@
 <body>
   <!-- ============ Interactive hero ============ -->
   <section id="hero" class="hero" aria-label="Interactive Turboencabulator">
-    <canvas id="scene" aria-label="3D model of the Turboencabulator"></canvas>
+    <canvas id="scene" aria-label="3D model of the Turboencabulator. Use the arrow keys to step through its parts."></canvas>
     <svg id="leaders" aria-hidden="true"></svg>
     <div id="labels" aria-hidden="true"></div>
 
@@ -99,7 +99,7 @@
       <div class="card-links">
         <a class="readmore-m" href="#post">Read the write-up ↓</a>
       </div>
-      <p class="hint"><b>Drag</b> to turn · <b>Scroll</b> to zoom · <b>Drag</b> a brush to pluck · <kbd>E</kbd> engage · <kbd>X</kbd> explode · <kbd>F</kbd> hide controls</p>
+      <p class="hint"><b>Drag</b> to turn · <b>Scroll</b> to zoom · <b>Drag</b> a brush to pluck · <kbd>E</kbd> engage · <kbd>X</kbd> explode · <kbd>F</kbd> hide controls · <kbd>←</kbd> <kbd>→</kbd> step through parts</p>
       </div></div>
     </section>
 
@@ -131,7 +131,22 @@
     <p>Nothing on this page measures inverse reactive current. The machine's behaviour is invented to fit the datasheet's descriptions, the way a prop department would. The rendering and the physics, on the other hand, are real, and that's mostly what this post is about.</p>
     </aside>
     <h2 id="source">The source material</h2>
-    <p>The text is older than the sheet. It was written by a British engineering student, John Hellins Quick, and published in 1944 in the student journal of the Institution of Electrical Engineers; <em>Time</em> reprinted it in 1946, and it has been passed around (and performed, straight-faced, on film) ever since. The version I worked from is GE handbook sheet HBK-8359, dated December 31, 1962, which dresses the joke up as a real product listing.</p>
+    <p>The text is older than the sheet. It was written by a British engineering student, John Hellins Quick, and published in 1944 in the student journal of the Institution of Electrical Engineers; <em>Time</em> quoted it in April 1946, in a piece called “For Nofer Trunnions”, and it has been passed around (and performed, straight-faced, on film) ever since. The version I worked from is GE handbook sheet HBK-8359, dated December 31, 1962, which dresses the joke up as a real product listing.</p>
+    <!-- Vertical timeline, after the site's Timeline.astro (itself after the Chirpy
+         theme): a line and dot markers drawn with pseudo-elements, no JS. Entries
+         run oldest first, each with its date on the left, given only as precisely
+         as it's known. -->
+    <ol class="timeline">
+      <li><time class="tl-date" datetime="1944-12">Dec 1944</time><a href="https://doi.org/10.1049/sqj.1944.0033">John Hellins Quick's “The Turbo-Encabulator in Industry”, in the IEE's <i>Students' Quarterly Journal</i></a></li>
+      <li><time class="tl-date" datetime="1946">1946</time><span>Reprinted in the U.S. by Arthur D. Little, Inc. in its <i>Industrial Bulletin</i></span></li>
+      <li><time class="tl-date" datetime="1946-04-15">15 Apr 1946</time><a href="https://time.com/archive/6823158/science-for-nofer-trunnions/"><i>Time</i> runs it as “For Nofer Trunnions”</a></li>
+      <li><time class="tl-date" datetime="1962-12-31">31 Dec 1962</time><a href="#source">General Electric's Instrument Department issues handbook sheet HBK-8359</a></li>
+      <li><time class="tl-date" datetime="1977">c. 1977</time><a href="https://en.wikipedia.org/wiki/Turbo_encabulator">Bud Haggart performs it, straight-faced, in an industrial film</a></li>
+      <li><time class="tl-date" datetime="1988">c. 1988</time><a href="https://shoppress.dormanproducts.com/turboencabulator/">Haggart films it again for Chrysler, as if Chrysler had built it</a></li>
+      <li><time class="tl-date" datetime="1997">1997</time><a href="https://www.designnews.com/industry/rockwell-automation-39-s-funny-retroencabulator-video">Rockwell Automation's “Retro Encabulator”, narrated by Mike Kraft, using an Allen-Bradley motor control centre</a></li>
+      <li><time class="tl-date" datetime="2022">2022</time><a href="https://en.wikipedia.org/wiki/Turbo_encabulator">Mike Kraft narrates the SANS ICS “HyperEncabulator”</a></li>
+      <li><time class="tl-date" datetime="2026-11-19">19 Nov 2026</time><a href="#hero">This one: in 3D, with forty-seven pluckable brushes</a></li>
+    </ol>
     <figure class="wide">
       <div class="sheet-pair">
         <a href="images/hbk-8359-p801.webp"><img src="images/hbk-8359-p801.webp" alt="Page 801 of handbook sheet HBK-8359: a photograph of the Turboencabulator, a cylindrical machine with a fan at one end on a curved base." loading="lazy" width="1280" height="1790" /></a>
@@ -205,7 +220,10 @@
     <p>Each surface gets one flat palette colour. The fragment shader compares the surface normal with a light direction: lit faces keep the flat colour, faces turning away get a screen of slightly darker dots, and faces in shadow get ink dots. The dots are laid out in <em>screen</em> space on a 45° grid, as in print, so they stay the same size however close you zoom. Try it:</p>
     <figure>
       <div class="fig-box">
-        <canvas id="fig-halftone" class="fig-canvas square" aria-label="A sphere shaded with halftone dots"></canvas>
+        <div class="fig-zoom">
+          <canvas id="fig-halftone" class="fig-canvas square" aria-label="A sphere shaded with halftone dots. Pinch, double-tap, or press plus and minus to zoom; arrow keys pan; 0 resets."></canvas>
+          <button class="btn small fig-zoom-reset" type="button" hidden>Reset zoom</button>
+        </div>
         <div class="fig-controls">
           <label class="slider"><span>Light</span><input id="fig-ht-light" type="range" min="-180" max="180" value="-35" /><output id="fig-ht-light-out">−35°</output></label>
           <label class="slider"><span>Dot size</span><input id="fig-ht-dot" type="range" min="3" max="12" step="0.5" value="5" /><output id="fig-ht-dot-out">5 px</output></label>
@@ -254,7 +272,7 @@
           <label class="slider"><span>Damping</span><input id="fig-str-damp" type="range" min="0" max="1" step="0.01" value="0.2" /><output id="fig-str-damp-out">0.20</output></label>
         </div>
       </div>
-      <figcaption>Figure 3 · The left end is driven: watch the reflections interfere, drag a bead, or turn the drive off and let the string settle.</figcaption>
+      <figcaption>Figure 3 · Drive the left end and watch the reflections interfere, or drag a bead and let the string settle.</figcaption>
     </figure>
     <p>Grabbing a brush in 3D needed one more trick. The brushes are a few pixels wide, so instead of asking the ray to hit one, the code finds where the pointer's ray passes closest to the whole row of brushes, and accepts anything within a brush-width or so (as long as the casing isn't in the way). Dragging then happens on a vertical plane facing the camera, so up always means up.</p>
     <h2 id="shapes">Wave shapes have consequences</h2>

@@ -52,9 +52,25 @@ function halftoneFigure() {
   // of its width. The sphere is redrawn at every zoom, so the dots stay sharp.
   const view = { k: 1, cx: 0.5, cy: 0.5 };
   const K_MAX = 8;
+  const resetBtn = cv.parentElement.querySelector('.fig-zoom-reset');
+
+  // Mid-gesture (a pinch, a pan, a trackpad zoom) the figure is drawn at half
+  // resolution, a quarter of the pixels, so it keeps up on slower phones; it
+  // is redrawn sharp a moment after the gesture stops.
+  let gesturing = false;
+  let settle = 0;
+  const busy = () => {
+    gesturing = true;
+    clearTimeout(settle);
+    settle = setTimeout(() => {
+      gesturing = false;
+      redraw();
+    }, 150);
+  };
 
   function draw() {
-    const size = Math.max(1, Math.round(cv.clientWidth * DPR));
+    const scale = DPR * (gesturing ? 0.5 : 1);
+    const size = Math.max(1, Math.round(cv.clientWidth * scale));
     if (cv.width !== size) cv.width = cv.height = size;
     const img = ctx.createImageData(size, size);
     const d = img.data;
@@ -67,10 +83,10 @@ function halftoneFigure() {
     const ln = Math.hypot(lx, ly, lz);
     lx /= ln; ly /= ln; lz /= ln;
 
-    const dot = +dotIn.value * DPR;
+    const dot = +dotIn.value * scale;
     const ink = inkIn.checked;
     const R = size * 0.38;
-    const line = 2.6 * DPR;
+    const line = 2.6 * scale;
     const c = size / 2;
     const screen = (px, py, r) => {
       // 45° screen-space grid, as in print
@@ -138,7 +154,9 @@ function halftoneFigure() {
     view.cx = Math.min(1 - m, Math.max(m, view.cx));
     view.cy = Math.min(1 - m, Math.max(m, view.cy));
     // Zoomed in, one finger pans the figure; zoomed out, it scrolls the page.
-    cv.classList.toggle('zoomed', view.k > 1.001);
+    const zoomed = view.k > 1.001;
+    cv.classList.toggle('zoomed', zoomed);
+    if (resetBtn) resetBtn.hidden = !zoomed;
     redraw();
   };
   // Screen point, as fractions of the canvas, relative to its centre.
@@ -152,6 +170,10 @@ function halftoneFigure() {
     view.cx += s.x / view.k - s.x / k;
     view.cy += s.y / view.k - s.y / k;
     view.k = k;
+    clampView();
+  };
+  const resetView = () => {
+    Object.assign(view, { k: 1, cx: 0.5, cy: 0.5 });
     clampView();
   };
   const panBy = (dx, dy) => {
@@ -180,10 +202,12 @@ function halftoneFigure() {
     const p = frac(e);
     pts.set(e.pointerId, p);
     if (before) {
+      busy();
       const after = pair();
       if (before.dist > 0) zoomAt(after.mid, after.dist / before.dist);
       panBy(after.mid.x - before.mid.x, after.mid.y - before.mid.y);
     } else if (pts.size === 1 && view.k > 1.001) {
+      busy();
       panBy(p.x - prev.x, p.y - prev.y);
     }
     if (Math.hypot(p.x - prev.x, p.y - prev.y) > 0.002) moved = true;
@@ -194,7 +218,7 @@ function halftoneFigure() {
     // Double-tap (or double-click) toggles between zoomed in and out.
     const s = frac(e), now = performance.now();
     if (lastTap && now - lastTap.t < 320 && Math.hypot(s.x - lastTap.s.x, s.y - lastTap.s.y) < 0.06) {
-      if (view.k > 1.001) Object.assign(view, { k: 1, cx: 0.5, cy: 0.5 }), clampView();
+      if (view.k > 1.001) resetView();
       else zoomAt(s, 3);
       lastTap = null;
     } else lastTap = { s, t: now };
@@ -205,10 +229,29 @@ function halftoneFigure() {
   cv.addEventListener('wheel', (e) => {
     if (!e.ctrlKey) return;
     e.preventDefault();
+    busy();
     zoomAt(frac(e), Math.exp(-e.deltaY * 0.01));
   }, { passive: false });
   // Safari's own pinch gesture would zoom the whole page.
   cv.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  // Keyboard: + and − zoom on the centre, 0 resets, arrows pan while zoomed.
+  cv.tabIndex = 0;
+  cv.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const centre = { x: 0, y: 0 };
+    const pan = { ArrowLeft: [0.12, 0], ArrowRight: [-0.12, 0], ArrowUp: [0, 0.12], ArrowDown: [0, -0.12] }[e.key];
+    if (e.key === '+' || e.key === '=') zoomAt(centre, 1.5);
+    else if (e.key === '-' || e.key === '_') zoomAt(centre, 1 / 1.5);
+    else if (e.key === '0') resetView();
+    else if (pan && view.k > 1.001) panBy(...pan);
+    else return; // anything else (and arrows when not zoomed) does what it normally does
+    e.preventDefault();
+  });
+  resetBtn?.addEventListener('click', () => {
+    resetView();
+    cv.focus();
+  });
 }
 
 /* ============================================================
@@ -223,6 +266,9 @@ function stringFigure() {
   const dampIn = document.getElementById('fig-str-damp');
   const dampOut = document.getElementById('fig-str-damp-out');
   const driveIn = document.getElementById('fig-str-drive');
+  // The drive starts on, so the string moves by itself; not for readers who
+  // have asked their device for less motion.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) driveIn.checked = false;
   let phase = 0;
   let drive = 0; // eased 0..1 so toggling doesn't jolt the string
 
