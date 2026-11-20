@@ -24,6 +24,7 @@ html, body {
 
 /* ---------- hero: the machine fills the first screen ---------- */
 .hero {
+  --star-tail: 120px;
   position: relative;
   height: 100vh;
   height: 100svh;
@@ -35,12 +36,24 @@ html, body {
 @supports (overflow: clip) {
   .hero { overflow: visible; overflow-x: clip; }
 }
+/* The canvas's tail below the hero is only sky: cover it so a swipe or wheel
+   there scrolls the page instead of turning the machine. */
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: var(--star-tail);
+}
 
 #scene {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  /* Runs on below the hero so the stars can fade out above the title. */
+  height: calc(100% + var(--star-tail));
   display: block;
   touch-action: none;
   cursor: grab;
@@ -344,6 +357,7 @@ kbd {
 
 /* ---------- the post ---------- */
 .post {
+  position: relative; /* above the hero canvas's tail of stars */
   max-width: 720px;
   margin: 0 auto;
   padding: 96px 20px 120px;

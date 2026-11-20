@@ -33,6 +33,11 @@ const PAL = {
 const hero = document.getElementById('hero');
 const canvas = document.getElementById('scene');
 const heroSize = () => ({ w: hero.clientWidth, h: hero.clientHeight });
+// The canvas runs on past the bottom of the hero (see --star-tail in the CSS),
+// so the stars can thin out across the gap above the write-up's title. The
+// camera still frames the machine in the hero itself; the tail is extra sky.
+const canvasH = () => canvas.clientHeight;
+const starFade = { value: 1 };
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(DPR);
 renderer.setClearColor(PAL.bg);
@@ -126,11 +131,12 @@ const camHome = (at) => {
   const mat = new THREE.PointsMaterial({
     color: PAL.cream, size: 1.4 * DPR, sizeAttenuation: false, transparent: true, opacity: 0.55, depthWrite: false,
   });
-  // The stars thin out over the bottom of the hero, so space fades into the
-  // page instead of stopping at an edge. (Only the stars: the machine can
-  // reach down there too.) gl_FragCoord.y counts device pixels from the bottom.
+  // The stars thin out towards the bottom of the canvas, so space fades into
+  // the page instead of stopping at an edge. (Only the stars: the machine can
+  // reach down there too.) gl_FragCoord.y counts device pixels from the bottom;
+  // uFade is set on resize.
   mat.onBeforeCompile = (shader) => {
-    shader.uniforms.uFade = { value: 140 * DPR };
+    shader.uniforms.uFade = starFade;
     shader.fragmentShader = shader.fragmentShader
       .replace('void main() {', 'uniform float uFade;\nvoid main() {')
       .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( diffuse, opacity * smoothstep(0.0, uFade, gl_FragCoord.y) );');
@@ -1316,7 +1322,9 @@ const view = { ox: 0, oy: 0 };
 let fitTween = null;
 function applyView() {
   const { w, h } = heroSize();
-  camera.setViewOffset(w, h, view.ox, view.oy, w, h);
+  // A view window as tall as the canvas over a frame as tall as the hero: the
+  // hero part is unchanged and the tail below it just shows more of the sky.
+  camera.setViewOffset(w, h, view.ox, view.oy, w, canvasH());
   camera.updateProjectionMatrix();
 }
 const setDistance = (d) => camera.position.sub(controls.target).setLength(d).add(controls.target);
@@ -1350,7 +1358,9 @@ function fit({ smooth = false, at } = {}) {
 let fitted = false;
 function resize() {
   const { w, h } = heroSize();
-  renderer.setSize(w, h, false);
+  renderer.setSize(w, canvasH(), false);
+  // Fade from a little above the hero's bottom edge to the end of the tail.
+  starFade.value = (canvasH() - h + 60) * DPR;
   renderer.getDrawingBufferSize(U.uView.value);
   camera.aspect = w / h;
   sizeScope();
@@ -1479,7 +1489,7 @@ function frame() {
   machine.updateMatrixWorld();
 
   // dashed gold leader lines, pointing away from the machine's center
-  const { w: W, h: H } = heroSize();
+  const W = hero.clientWidth, H = canvasH();
   const c = toScreen(ctr.set(0, -0.3, 0).applyMatrix4(machine.matrixWorld), W, H);
   for (const l of labels) {
     if (l.s.o <= 0.001 || !l.p.group.visible) {
