@@ -14,8 +14,6 @@
   <meta property="og:image:height" content="600" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <!-- replaced with the deployed commit by .github/workflows/pages.yaml -->
-  <meta name="commit" content="__COMMIT__" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,800;1,7..72,400&family=Martian+Mono:wght@400;600&display=swap" rel="stylesheet" />
@@ -331,22 +329,10 @@ clip.xy += normalize(d) * uLine * 2.0 / uView * clip.w;          // push uLine p
           <!-- Tabler icon "brand-github" (MIT) -->
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg>
           Source on GitHub</a>
-        <span class="sep">·</span>
-        built from <a id="commit" href="https://github.com/lbeckman314/turbo-encabulator/commits/main" target="_blank" rel="noopener">dev</a>
       </span>
     </footer>
   </main>
 
-  <script>
-    // Point "built from" at the deployed commit (left as "dev" locally).
-    (() => {
-      const sha = document.querySelector('meta[name="commit"]').content;
-      if (!/^[0-9a-f]{7,40}$/.test(sha)) return;
-      const a = document.getElementById('commit');
-      a.textContent = sha.slice(0, 7);
-      a.href = `https://github.com/lbeckman314/turbo-encabulator/commit/${sha}`;
-    })();
-  </script>
   <script type="module" src="main.js"></script>
   <script type="module" src="figures.js"></script>
 </body>

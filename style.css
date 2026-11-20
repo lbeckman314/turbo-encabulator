@@ -512,7 +512,6 @@ kbd {
 }
 .post-foot .src { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .post-foot .src a { display: inline-flex; align-items: center; gap: 6px; }
-.post-foot #commit { font: 400 12.5px var(--mono); }
 .post-foot svg,
 .source-m svg {
   width: 16px;
