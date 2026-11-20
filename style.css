@@ -633,101 +633,65 @@ kbd {
 }
 
 /* ---------- timeline ----------
-   Ported from the site's Timeline.astro (after the Chirpy theme): a line and
-   dots drawn with pseudo-elements. Unlike the original, a long title wraps
-   instead of being cut off, so each row's line runs to the row's real bottom
-   and its dot sits on the first line of text.
-   Coordinates (px from the timeline's left edge):
-     line: left 77, width 4 -> centre 79; year dot: left 73, 12px; item dot: left 75, 8px */
+   After the site's Timeline.astro (itself after the Chirpy theme): a line and
+   dots drawn with pseudo-elements. Each row is a date column, the line, then
+   the text; the only colour is on the dots. Long titles wrap, so the line runs
+   to each row's real bottom and the dot sits on the first line of text. */
 .timeline {
-  --tl-color: var(--line);
-  --tl-node: var(--muted);
-  --tl-zebra: rgba(240, 234, 210, 0.04);
-  --tl-row-h: 2.5rem;
+  --tl-date-w: 6.5rem; /* fits "15 Apr 1946" */
+  --tl-gap: 1.75rem;   /* line sits in the middle of this gap */
+  --tl-lh: 1.5rem;
+  --tl-pad: 0.6rem;
+  list-style: none;
   margin: 28px 0 32px;
-  font-family: var(--sans);
+  padding: 0;
+  font: 400 15.5px/var(--tl-lh) var(--sans);
 }
-.timeline .tl-year-block { position: relative; }
-.timeline .tl-year {
-  display: block;
-  position: relative;
-  height: 3rem;
-  line-height: 3rem;
-  padding-left: 6.5rem;
-  font: 600 20px/3rem var(--mono);
-  color: var(--fg);
-}
-.timeline .tl-year::before {
-  content: '';
-  position: absolute;
-  left: 77px;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--tl-color);
-}
-.timeline .tl-year-block.first .tl-year::before { top: 1.5rem; }
-.timeline .tl-year::after {
-  content: '';
-  position: absolute;
-  left: 73px;
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  transform: translateY(-50%);
-  box-sizing: border-box;
-  border: 3px solid var(--gold-deep);
-  border-radius: 50%;
-  background: var(--bg);
-  z-index: 1;
-}
-.timeline ul { list-style: none; margin: 0; padding: 0; }
 .post .timeline li { margin: 0; }
 .timeline li {
   position: relative;
-  min-height: var(--tl-row-h);
-  padding: 0.55rem 0.75rem 0.55rem 6.5rem;
-  font-size: 15px;
-  line-height: 1.4rem;
+  display: grid;
+  grid-template-columns: var(--tl-date-w) 1fr;
+  column-gap: var(--tl-gap);
+  padding: var(--tl-pad) 0;
+  color: var(--fg);
 }
-.timeline li:nth-child(odd) {
-  background-image: linear-gradient(to right, transparent 0%, var(--tl-zebra) 8%, var(--tl-zebra) 92%, transparent 100%);
-}
+/* the line: from row top to row bottom, trimmed to the first and last dots */
 .timeline li::before {
   content: '';
   position: absolute;
-  left: 77px;
+  left: calc(var(--tl-date-w) + var(--tl-gap) / 2 - 1px);
   top: 0;
-  bottom: -1px;
-  width: 4px;
-  background: var(--tl-color);
+  bottom: 0;
+  width: 2px;
+  background: var(--line);
 }
-/* The last row of a year stops at its own bottom edge, so it doesn't overlap
-   the next year's segment (the doubled translucent fill would look darker)... */
-.timeline li:last-child::before { bottom: 0; }
-/* ...and the very last row stops at its dot. */
-.timeline .tl-year-block:last-child li:last-child::before { bottom: auto; height: calc(var(--tl-row-h) / 2); }
+.timeline li:first-child::before { top: calc(var(--tl-pad) + var(--tl-lh) / 2); }
+.timeline li:last-child::before { bottom: auto; height: calc(var(--tl-pad) + var(--tl-lh) / 2); }
+/* the dot, on the first line of text */
 .timeline li::after {
   content: '';
   position: absolute;
-  left: 75px;
-  top: calc(var(--tl-row-h) / 2);
-  width: 8px;
-  height: 8px;
-  transform: translateY(-50%);
+  left: calc(var(--tl-date-w) + var(--tl-gap) / 2 - 5px);
+  top: calc(var(--tl-pad) + var(--tl-lh) / 2 - 5px);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--tl-node);
-  z-index: 1;
+  background: var(--gold);
+  box-shadow: 0 0 0 4px var(--bg); /* a little gap where the line meets it */
 }
-.timeline .tl-day,
-.timeline .tl-month {
-  position: absolute;
-  top: 0;
-  line-height: var(--tl-row-h);
-  font-family: var(--mono);
+.timeline .tl-date {
+  text-align: right;
+  font: 400 13px/var(--tl-lh) var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
 }
-.timeline .tl-day { left: 0.75rem; font-variant-numeric: tabular-nums; color: var(--fg); }
-.timeline .tl-month { left: 2.5rem; font-size: 85%; color: var(--muted); text-transform: uppercase; }
-.timeline a { color: var(--gold); text-decoration: none; }
-.timeline a:hover { text-decoration: underline; }
-.timeline .tl-title { color: var(--fg); }
+.timeline a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(240, 234, 210, 0.3);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.timeline a:hover { color: inherit; text-decoration-color: currentColor; }
