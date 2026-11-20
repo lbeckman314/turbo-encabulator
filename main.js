@@ -1271,6 +1271,11 @@ canvas.addEventListener('pointerleave', (e) => {
 
 let downAt = null;
 canvas.addEventListener('pointerdown', (e) => (downAt = { x: e.clientX, y: e.clientY }));
+// A touch anywhere off the machine (the controls card, the write-up) dismisses
+// a tapped part's tooltip; a mouse's hover tooltip already follows the cursor.
+window.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'mouse' && e.target !== canvas) showTip(null);
+});
 function endGrab(e) {
   if (!grab) return false;
   if (!grab.moved) {
