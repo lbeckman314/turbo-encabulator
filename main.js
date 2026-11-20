@@ -56,16 +56,18 @@ function freeRect() {
   const { w, h } = heroSize();
   const hb = hero.getBoundingClientRect();
   const card = hero.querySelector('.card').getBoundingClientRect();
-  const cardShown = !hero.classList.contains('focus');
+  const collapsed = hero.classList.contains('focus');
   // always below the big title
   const r = { x0: 0, y0: document.getElementById('title').getBoundingClientRect().bottom - hb.top, x1: w, y1: h };
   let pad = 40;
   if (isNarrow()) {
-    // phones: card along the bottom; with it hidden, leave room for the
-    // read-more button instead
+    // phones: card along the bottom (collapsed or not)
     pad = 14;
-    r.y1 = cardShown ? card.top - hb.top : h - 60;
-  } else if (cardShown) {
+    r.y1 = card.top - hb.top;
+  } else if (collapsed) {
+    // wide, collapsed: just the card's top row, bottom left
+    r.y1 = card.top - hb.top;
+  } else {
     // wide: card on the left
     r.x0 = card.right - hb.left;
   }
@@ -1154,18 +1156,23 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-/* ---------- focus mode: hide the control card, let the machine have its space ---------- */
+/* ---------- collapsible card: the chevron folds it down to its top row ---------- */
 const focusBtn = $('#focus');
+const cardBody = $('#card-body');
 function setFocus(on) {
   if (on === hero.classList.contains('focus')) return;
   finishIntro();
   hero.classList.toggle('focus', on);
-  focusBtn.setAttribute('aria-pressed', String(on));
+  focusBtn.setAttribute('aria-expanded', String(!on));
   focusBtn.setAttribute('aria-label', on ? 'Show controls' : 'Hide controls');
   focusBtn.title = on ? 'Show controls (F)' : 'Hide controls (F)';
   showTip(null);
-  resize();
+  // Re-fit the machine once the card has finished resizing.
+  if (reduceMotion) requestAnimationFrame(resize);
 }
+cardBody.addEventListener('transitionend', (e) => {
+  if (e.target === cardBody && e.propertyName === 'grid-template-rows') resize();
+});
 focusBtn.addEventListener('click', () => setFocus(!hero.classList.contains('focus')));
 
 // In a scrolling post, the wheel should scroll the page. Zoom only with
