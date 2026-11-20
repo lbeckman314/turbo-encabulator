@@ -12,6 +12,8 @@ Nothing on this page measures inverse reactive current. The machine's behaviour 
 
 The text is older than the sheet. It was written by a British engineering student, John Hellins Quick, and published in 1944 in the student journal of the Institution of Electrical Engineers; _Time_ reprinted it in 1946, and it has been passed around (and performed, straight-faced, on film) ever since. The version I worked from is GE handbook sheet HBK-8359, dated December 31, 1962, which dresses the joke up as a real product listing.
 
+@include partials/timeline.html
+
 @include partials/sheets.html
 
 That last detail sets the terms of the project. There are no blueprints, so everything is reverse-engineered from Fig. 1, a single grainy photo, and the sheet's descriptions of parts that don't exist. The photo turns out to be enough. The machine is a handful of simple solids:

@@ -132,6 +132,49 @@
     </aside>
     <h2 id="source">The source material</h2>
     <p>The text is older than the sheet. It was written by a British engineering student, John Hellins Quick, and published in 1944 in the student journal of the Institution of Electrical Engineers; <em>Time</em> reprinted it in 1946, and it has been passed around (and performed, straight-faced, on film) ever since. The version I worked from is GE handbook sheet HBK-8359, dated December 31, 1962, which dresses the joke up as a real product listing.</p>
+    <!-- Vertical timeline, ported from the site's Timeline.astro (itself after the
+         Chirpy theme): a line and dot markers drawn with pseudo-elements, no JS.
+         Entries run oldest first, grouped by year. The day and month columns are
+         filled in only as far as the date is known. -->
+    <div class="timeline">
+      <section class="tl-year-block first">
+        <time class="tl-year" datetime="1944">1944</time>
+        <ul>
+          <li><span class="tl-day"></span><span class="tl-month">Dec</span><a href="https://doi.org/10.1049/sqj.1944.0033">John Hellins Quick's “The Turbo-Encabulator in Industry”, in the IEE's <i>Students' Quarterly Journal</i></a></li>
+        </ul>
+      </section>
+      <section class="tl-year-block">
+        <time class="tl-year" datetime="1946">1946</time>
+        <ul>
+          <li><span class="tl-day"></span><span class="tl-month"></span><span class="tl-title">Reprinted in the U.S. by Arthur D. Little, Inc. in its <i>Industrial Bulletin</i></span></li>
+          <li><span class="tl-day">15</span><span class="tl-month">Apr</span><a href="https://time.com/archive/6823158/science-for-nofer-trunnions/"><i>Time</i> runs it as “For Nofer Trunnions”</a></li>
+        </ul>
+      </section>
+      <section class="tl-year-block">
+        <time class="tl-year" datetime="1962">1962</time>
+        <ul>
+          <li><span class="tl-day">31</span><span class="tl-month">Dec</span><a href="#source">General Electric's Instrument Department issues handbook sheet HBK-8359</a></li>
+        </ul>
+      </section>
+      <section class="tl-year-block">
+        <time class="tl-year" datetime="1977">1977</time>
+        <ul>
+          <li><span class="tl-day">c.</span><span class="tl-month"></span><a href="https://en.wikipedia.org/wiki/Turbo_encabulator">Bud Haggart performs it, straight-faced, in an industrial film</a></li>
+        </ul>
+      </section>
+      <section class="tl-year-block">
+        <time class="tl-year" datetime="2022">2022</time>
+        <ul>
+          <li><span class="tl-day"></span><span class="tl-month"></span><a href="https://en.wikipedia.org/wiki/Turbo_encabulator">Mike Kraft narrates the SANS ICS “HyperEncabulator”</a></li>
+        </ul>
+      </section>
+      <section class="tl-year-block">
+        <time class="tl-year" datetime="2026">2026</time>
+        <ul>
+          <li><span class="tl-day">19</span><span class="tl-month">Nov</span><a href="#hero">This one: in 3D, with forty-seven pluckable brushes</a></li>
+        </ul>
+      </section>
+    </div>
     <figure class="wide">
       <div class="sheet-pair">
         <a href="images/hbk-8359-p801.webp"><img src="images/hbk-8359-p801.webp" alt="Page 801 of handbook sheet HBK-8359: a photograph of the Turboencabulator, a cylindrical machine with a fan at one end on a curved base." loading="lazy" width="1280" height="1790" /></a>
