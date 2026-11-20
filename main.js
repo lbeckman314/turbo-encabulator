@@ -50,15 +50,46 @@ controls.addEventListener('start', () => (controls.autoRotate = false));
 
 const isNarrow = () => window.innerWidth < 720;
 const CAM_DIR = new THREE.Vector3(-0.58, 0.3, 0.76).normalize();
+// The part of the hero the machine should sit in, in hero pixels: clear of
+// the title and (unless it's hidden) the control card.
+function freeRect() {
+  const { w, h } = heroSize();
+  const hb = hero.getBoundingClientRect();
+  const card = hero.querySelector('.card').getBoundingClientRect();
+  const cardShown = !hero.classList.contains('focus');
+  // always below the big title
+  const r = { x0: 0, y0: document.getElementById('title').getBoundingClientRect().bottom - hb.top, x1: w, y1: h };
+  let pad = 40;
+  if (isNarrow()) {
+    // phones: card along the bottom; with it hidden, leave room for the
+    // read-more button instead
+    pad = 14;
+    r.y1 = cardShown ? card.top - hb.top : h - 60;
+  } else if (cardShown) {
+    // wide: card on the left
+    r.x0 = card.right - hb.left;
+  }
+  return { x0: r.x0 + pad, y0: r.y0 + pad, x1: r.x1 - pad, y1: r.y1 - pad };
+}
+
+// Rough half-extents of the assembled machine as seen from CAM_DIR. Wide
+// screens get a closer camera, so more perspective: the base's front corner
+// reaches further down.
+const FIT_W = 3.0;
+const fitH = () => (isNarrow() ? 2.6 : 3.05);
 const camHome = () => {
   const { w, h } = heroSize();
   const aspect = w / h;
   camera.fov = aspect < 0.8 ? 48 : 35;
   camera.updateProjectionMatrix();
   const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  const dist = Math.max(12, 3.6 / (halfH * aspect));
-  const target = new THREE.Vector3(0, isNarrow() ? -1.0 : -0.45, 0);
-  return { target, pos: target.clone().addScaledVector(CAM_DIR, dist) };
+  // Distance at which the machine fits the free rect (1 world unit spans
+  // h / (2 · dist · halfH) pixels).
+  const f = freeRect();
+  const fw = Math.max(80, f.x1 - f.x0), fh = Math.max(80, f.y1 - f.y0);
+  const dist = Math.max(7, (FIT_W * h) / (halfH * fw), (fitH() * h) / (halfH * fh));
+  const target = new THREE.Vector3(0, -0.45, 0);
+  return { target, pos: target.clone().addScaledVector(CAM_DIR, dist), dist, f };
 };
 {
   const { target, pos } = camHome();
@@ -947,9 +978,11 @@ engageBtn.addEventListener('click', () => setEngaged(!S.engaged));
 explodeBtn.addEventListener('click', () => setExploded(!S.exploded));
 document.querySelectorAll('#wave button').forEach((b) => b.addEventListener('click', () => setWave(b.dataset.wave)));
 window.addEventListener('keydown', (e) => {
-  if (e.target.closest('input, textarea') || e.metaKey || e.ctrlKey) return;
+  if (e.target.closest?.('input, textarea') || e.metaKey || e.ctrlKey) return;
   if (e.key === 'e' || e.key === 'E') setEngaged(!S.engaged);
   if (e.key === 'x' || e.key === 'X') setExploded(!S.exploded);
+  if (e.key === 'f' || e.key === 'F') setFocus(!hero.classList.contains('focus'));
+  if (e.key === 'Escape') setFocus(false);
 });
 
 /* ---------- hover / tap: gold ink outline + tooltip ---------- */
@@ -1099,21 +1132,41 @@ canvas.addEventListener('pointerup', (e) => {
 /* ============================================================
  * Resize
  * ========================================================== */
+let fitted = false;
 function resize() {
   const { w, h } = heroSize();
   renderer.setSize(w, h, false);
   renderer.getDrawingBufferSize(U.uView.value);
   camera.aspect = w / h;
-  // Keep the machine clear of the control card: nudge it right on wide
-  // screens, up on narrow ones where the card spans the bottom.
-  const card = document.querySelector('.card');
-  if (w > 980) camera.setViewOffset(w, h, -Math.min(180, w * 0.1), 0, w, h);
-  else camera.setViewOffset(w, h, 0, card.offsetHeight * 0.5, w, h);
+  // Shift the view so the machine sits in the middle of the free rect, and
+  // dolly to the distance that fits it there (keeping the user's angle).
+  const { dist, f } = camHome();
+  camera.setViewOffset(w, h, w / 2 - (f.x0 + f.x1) / 2, h / 2 - (f.y0 + f.y1) / 2, w, h);
   camera.updateProjectionMatrix();
   sizeScope();
+  labels.forEach((l) => (l.w = 0)); // re-measure: label size follows the layout
+  if (fitted && controls.enabled) {
+    const pos = camera.position.clone().sub(controls.target).setLength(dist).add(controls.target);
+    animate(camera.position, { x: pos.x, y: pos.y, z: pos.z, duration: 550, ease: 'inOutQuad' });
+  }
+  fitted = true;
 }
 window.addEventListener('resize', resize);
 resize();
+
+/* ---------- focus mode: hide the control card, let the machine have its space ---------- */
+const focusBtn = $('#focus');
+function setFocus(on) {
+  if (on === hero.classList.contains('focus')) return;
+  finishIntro();
+  hero.classList.toggle('focus', on);
+  focusBtn.setAttribute('aria-pressed', String(on));
+  focusBtn.setAttribute('aria-label', on ? 'Show controls' : 'Hide controls');
+  focusBtn.title = on ? 'Show controls (F)' : 'Hide controls (F)';
+  showTip(null);
+  resize();
+}
+focusBtn.addEventListener('click', () => setFocus(!hero.classList.contains('focus')));
 
 // In a scrolling post, the wheel should scroll the page. Zoom only with
 // ctrl/⌘ + wheel (which is also what trackpad pinch sends).
@@ -1211,7 +1264,11 @@ function frame() {
     l.dot.setAttribute('cx', a.x.toFixed(1));
     l.dot.setAttribute('cy', a.y.toFixed(1));
     const right = dx >= 0;
-    l.el.style.transform = `translate3d(${(ex + (right ? 7 : -7)).toFixed(1)}px, ${ey.toFixed(1)}px, 0) translate(${right ? 0 : -100}%, -50%)`;
+    // Keep the label text on screen (phones are narrow).
+    const lw = (l.w ||= l.el.offsetWidth);
+    const lx = right ? Math.min(ex + 7, W - lw - 6) : Math.max(ex - 7, lw + 6);
+    const ly = THREE.MathUtils.clamp(ey, 12, H - 12);
+    l.el.style.transform = `translate3d(${lx.toFixed(1)}px, ${ly.toFixed(1)}px, 0) translate(${right ? 0 : -100}%, -50%)`;
     const o = a.behind ? '0' : String(l.s.o);
     l.g.style.opacity = o;
     l.el.style.opacity = o;
@@ -1269,6 +1326,7 @@ function intro() {
 }
 
 document.fonts.ready.then(() => {
+  resize(); // the title's height (and label widths) may have changed
   meters.forEach((m) => (m.last = -1));
   drawBadge();
 });
