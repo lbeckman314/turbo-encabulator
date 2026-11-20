@@ -8,7 +8,7 @@ You can spin and explode the machine, pick a wave shape (sinusoidal, cosinusoida
 
 ## Running locally
 
-There's no build step. Serve the folder with any static server, for example:
+The page itself needs no build step. Serve the folder with any static server, for example:
 
 ```sh
 python3 -m http.server 4410
@@ -16,11 +16,31 @@ python3 -m http.server 4410
 
 Then open http://localhost:4410. three.js and anime.js load from jsDelivr through the import map in `index.html`.
 
+## Editing the write-up
+
+The write-up is written in `post.md` and rendered into `index.html` by `build.mjs`, between the `<!-- post:start -->` and `<!-- post:end -->` markers. Commit the rebuilt `index.html` along with `post.md`: GitHub Pages serves the files as they are, with no build of its own.
+
+```sh
+npm install       # once
+npm run build     # rebuild index.html from post.md
+npm run dev       # rebuild whenever post.md or a partial changes
+```
+
+Besides ordinary Markdown (including tables and raw HTML such as `<var>`), `post.md` supports:
+
+- front matter: `title`, `date` (YYYY-MM-DD) and comma-separated `tags`, which become the post header
+- `## Heading {#id}` to set a heading's id
+- `::: callout Label` … `:::` for a labelled aside
+- `@include partials/<file>.html` on its own line to insert an HTML partial, used for the figures, the handbook images and the equation
+
 ## Files
 
 | File         | What it does                                                                        |
 | ------------ | ----------------------------------------------------------------------------------- |
-| `index.html` | The page: the 3D machine at the top, then the write-up                              |
+| `index.html` | The page: the 3D machine at the top, then the write-up (generated from `post.md`)   |
+| `post.md`    | The write-up, in Markdown                                                           |
+| `partials/`  | HTML pieces the write-up includes: the figures, the handbook images, the equation   |
+| `build.mjs`  | Renders `post.md` into `index.html`                                                 |
 | `main.js`    | Scene, comic shaders (halftone fill and ink outline), parts, anime.js timelines, UI |
 | `string.js`  | The brush-string simulation, shared by the machine and Figure 3                     |
 | `figures.js` | The write-up's interactive figures: the halftone sphere and the flattened string    |

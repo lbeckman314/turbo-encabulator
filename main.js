@@ -24,6 +24,7 @@ const PAL = {
   red: 0xc8553d,
   teal: 0x4f8f8a,
   shadow: 0x1a2440,
+  copper: 0xc77b45,
 };
 
 /* ============================================================
@@ -375,12 +376,136 @@ const casing = part(
   'Malleable logarithmic casing',
   'Surmounts the baseplate in such a way that the spurving bearings line up with the fan. Amulite construction.',
   [0, 0, 0],
-  [0.3, 0.55, -0.95]
+  [-1.85, 0.72, 0.62]
 );
-casing.group.add(alongX(mesh(new THREE.CylinderGeometry(1, 1, 4.2, 96, 1, true), PAL.cream)));
-casing.group.add(mesh(new THREE.CircleGeometry(1, 96), PAL.cream, { position: V(2.1, 0, 0), rotation: E(0, Math.PI / 2, 0), outline: false }));
-casing.group.add(mesh(new THREE.CircleGeometry(0.99, 96), PAL.slate, { position: V(-1.95, 0, 0), rotation: E(0, -Math.PI / 2, 0), outline: false }));
-casing.group.add(mesh(new THREE.TorusGeometry(1.0, 0.03, 10, 96), PAL.gray, { position: V(2.1, 0, 0), rotation: E(0, Math.PI / 2, 0) }));
+// A slice of drum along x, between angles t0 and t0 + tl. Angles run around
+// the axis from the front (+z, t = 0) up over the top (+y, t = π/2).
+const drum = (r, x0, x1, t0, tl, color, opts = {}) => alongX(mesh(
+  new THREE.CylinderGeometry(r, r, x1 - x0, Math.max(8, Math.round((96 * tl) / (Math.PI * 2))), 1, true, t0, tl),
+  color, { position: V((x0 + x1) / 2, 0, 0), ...opts },
+));
+const TAU = Math.PI * 2;
+// The hatch: a window over the front-top of the drum, closed by a panel that
+// comes away in the exploded view (a cutaway, as in technical comics).
+const CUT = { x0: -1.8, x1: 1.8, t0: 0.15, t1: 1.3 };
+const LINER = 0.975; // inside face of the drum wall
+{
+  const { x0, x1, t0, t1 } = CUT;
+  // outer wall, with the window left open
+  casing.group.add(drum(1, -2.1, x0, 0, TAU, PAL.cream));
+  casing.group.add(drum(1, x0, x1, t1, TAU - (t1 - t0), PAL.cream));
+  casing.group.add(drum(1, x1, 2.1, 0, TAU, PAL.cream));
+  // dark lining, so the inside reads as a deep drum rather than more casing
+  casing.group.add(drum(LINER, -2.1, x0, 0, TAU, PAL.slate, { outline: false }));
+  casing.group.add(drum(LINER, x0, x1, t1, TAU - (t1 - t0), PAL.slate, { outline: false }));
+  casing.group.add(drum(LINER, x1, 2.1, 0, TAU, PAL.slate, { outline: false }));
+  // stiffening hoops inside
+  for (const x of [-1.45, -0.6, 0.25, 1.1]) {
+    casing.group.add(mesh(new THREE.TorusGeometry(0.955, 0.022, 8, 96), PAL.gray, { position: V(x, 0, 0), rotation: E(0, Math.PI / 2, 0) }));
+  }
+  // window frame: the cut edges of the wall, inked
+  for (const x of [x0, x1]) {
+    casing.group.add(mesh(new THREE.TorusGeometry(0.99, 0.022, 8, 40, t1 - t0), PAL.gray, { position: V(x, 0, 0), rotation: E(-t0, -Math.PI / 2, 0) }));
+  }
+  for (const t of [t0, t1]) {
+    casing.group.add(alongX(mesh(new THREE.CylinderGeometry(0.022, 0.022, x1 - x0, 8), PAL.gray, { position: V(0, 0.99 * Math.sin(t), 0.99 * Math.cos(t)) })));
+  }
+  // end caps: cream outside, dark inside
+  casing.group.add(mesh(new THREE.CircleGeometry(1, 96), PAL.cream, { position: V(2.1, 0, 0), rotation: E(0, Math.PI / 2, 0), outline: false }));
+  casing.group.add(mesh(new THREE.CircleGeometry(LINER, 96), PAL.slate, { position: V(2.08, 0, 0), rotation: E(0, -Math.PI / 2, 0), outline: false }));
+  casing.group.add(mesh(new THREE.TorusGeometry(1.0, 0.03, 10, 96), PAL.gray, { position: V(2.1, 0, 0), rotation: E(0, Math.PI / 2, 0) }));
+}
+// The hatch rides on its own group with its own dissolve, so in the exploded
+// view it can lift a little and fade away through the dot screen (anything
+// flying further would cover the brushes and pipes lifting above it).
+const hatch = new THREE.Group();
+casing.group.add(hatch);
+const hatchState = { open: 0 }; // 0 closed .. 1 gone
+const hatchFx = { fade: { value: 0 }, hover: casing.fx.hover };
+{
+  const { x0, x1, t0, t1 } = CUT;
+  // ready-made materials (bound to hatchFx), so finalize leaves them alone
+  const inked = (m) => {
+    addOutlineNormals(m.geometry);
+    const hull = new THREE.Mesh(m.geometry, outlineMaterial(hatchFx));
+    hull.raycast = () => {};
+    m.add(hull);
+    return m;
+  };
+  hatch.add(inked(drum(1, x0, x1, t0, t1 - t0, fillMaterial(PAL.cream, hatchFx))));
+  hatch.add(drum(LINER, x0, x1, t0, t1 - t0, fillMaterial(PAL.slate, hatchFx)));
+  // gold rivets at the corners
+  const rivet = new THREE.SphereGeometry(0.035, 12, 8);
+  const gold = fillMaterial(PAL.gold, hatchFx);
+  for (const x of [x0 + 0.09, x1 - 0.09]) {
+    for (const t of [t0 + 0.07, t1 - 0.07]) {
+      hatch.add(inked(mesh(rivet, gold, { position: V(x, 1.005 * Math.sin(t), 1.005 * Math.cos(t)) })));
+    }
+  }
+}
+const tm = (CUT.t0 + CUT.t1) / 2;
+const HATCH_OUT = V(0, Math.sin(tm), Math.cos(tm)).multiplyScalar(0.45); // lifts along its own normal
+
+/* ---------- Lotus-o-delta main winding (inside the casing) ---------- */
+const winding = part(
+  'winding',
+  'Lotus-o-delta main winding',
+  'Of the normal lotus-o-delta type. Every seventh conductor is joined by a non-reversible tremie pipe, hence the gold turns. Glows with realization.',
+  [0, 0, 0],
+  [-0.75, 0.5, 0.2]
+);
+const windRot = new THREE.Group(); // turns with the fan, so the gold turns crawl along like a barber pole
+winding.group.add(windRot);
+const windingMeshes = { copper: null, gold: null };
+{
+  // the ambifacient lunar waneshaft, running the length of the drum
+  winding.group.add(alongX(mesh(new THREE.CylinderGeometry(0.055, 0.055, 4.1, 14), PAL.gray)));
+  const X0 = -1.55, X1 = 0.95, TURNS = 21, R = 0.44;
+  windRot.add(alongX(mesh(new THREE.CylinderGeometry(0.33, 0.33, X1 - X0 + 0.1, 40), PAL.slate, { position: V((X0 + X1) / 2, 0, 0) })));
+  const pitch = (X1 - X0) / TURNS;
+  class Turn extends THREE.Curve {
+    constructor(x) { super(); this.x = x; }
+    getPoint(t, out = new THREE.Vector3()) {
+      return out.set(this.x + pitch * t, R * Math.sin(t * TAU), R * Math.cos(t * TAU));
+    }
+  }
+  for (let k = 0; k < TURNS; k++) {
+    const gold = k % 7 === 3;
+    // unique material per colour group, so the glow can be driven separately
+    const m = mesh(new THREE.TubeGeometry(new Turn(X0 + k * pitch), 40, 0.04, 8, false), gold ? PAL.gold : PAL.copper);
+    windRot.add(m);
+    if (gold) windingMeshes.gold ??= m;
+    else windingMeshes.copper ??= m;
+  }
+  // collector rings at both ends of the core
+  for (const x of [X0 - 0.08, X1 + 0.08]) {
+    windRot.add(mesh(new THREE.TorusGeometry(0.34, 0.035, 10, 48), PAL.gold, { position: V(x, 0, 0), rotation: E(0, Math.PI / 2, 0) }));
+  }
+}
+
+/* ---------- Differential girdle spring (inside the casing) ---------- */
+const spring = part(
+  'spring',
+  'Differential girdle spring',
+  "Mounted on the 'up' end of the grammeters. Winds and unwinds with the drive to take up any side fumbling.",
+  [0, 0, 0],
+  [1.45, 0.72, -0.05]
+);
+const springRot = new THREE.Group();
+springRot.position.x = 1.45;
+spring.group.add(springRot);
+{
+  const TURNS = 4.5, R0 = 0.12, R1 = 0.7;
+  class Spiral extends THREE.Curve {
+    getPoint(t, out = new THREE.Vector3()) {
+      const a = t * TURNS * TAU, r = R0 + (R1 - R0) * t;
+      return out.set(0.04 * Math.sin(a * 0.5), r * Math.sin(a), r * Math.cos(a));
+    }
+  }
+  springRot.add(mesh(new THREE.TubeGeometry(new Spiral(), 220, 0.024, 6, false), PAL.gold));
+  springRot.add(alongX(mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.2, 24), PAL.gray)));
+  spring.group.add(mesh(new THREE.TorusGeometry(0.76, 0.03, 8, 72), PAL.gray, { position: V(1.45, 0, 0), rotation: E(0, Math.PI / 2, 0) }));
+}
 
 /* ---------- Panandermic semi-boloid stator slots ---------- */
 const stator = part(
@@ -700,6 +825,7 @@ for (const p of parts) {
   }
 }
 brushItems.forEach((b) => (b.glow = b.tuft.material.uniforms.uGlow));
+const windGlow = { copper: windingMeshes.copper.material.uniforms.uGlow, gold: windingMeshes.gold.material.uniforms.uGlow };
 const buttonGlow = buttonMeshes.map((b) => b.material.uniforms.uGlow);
 
 /* ============================================================
@@ -944,6 +1070,13 @@ function setExploded(on) {
     duration: on ? 1500 : 1100,
     ease: on ? 'outElastic(1, .75)' : 'outExpo',
   });
+  animate(hatch.position, {
+    x: on ? HATCH_OUT.x : 0, y: on ? HATCH_OUT.y : 0, z: on ? HATCH_OUT.z : 0,
+    delay: on ? 100 : 250,
+    duration: 900,
+    ease: on ? 'outQuad' : 'inOutQuad',
+  });
+  animate(hatchState, { open: on ? 1 : 0, delay: on ? 300 : 0, duration: on ? 800 : 700, ease: on ? 'inQuad' : 'outQuad' });
   animate(brushStates, {
     lift: on ? 0.6 : 0,
     delay: stagger(14, { from: 'center' }),
@@ -1262,6 +1395,21 @@ function frame() {
   S.blink = S.garble * (Math.sin(t * 10) > 0 ? 1 : 0);
 
   rotor.rotation.x += S.rpm * (1 + 0.9 * pip) * dt * 30;
+  windRot.rotation.x += S.rpm * (1 + 0.9 * pip) * dt * 4;
+  // hatch: dissolves with the casing in the intro, or on its own when exploded
+  hatchFx.fade.value = Math.max(casing.fx.fade.value, hatchState.open);
+  hatch.visible = hatchState.open < 0.995; // and stops catching the pointer once gone
+  // the girdle spring winds and unwinds with the drive
+  springRot.rotation.x = Math.sin(str.phase) * 0.5 * S.amp * (1 + S.spike);
+  // winding glow: follows realization; flickers while the cosine drive is
+  // garbled, flashes on tangent spikes, pulses with pips
+  {
+    let g = S.rpm * (0.25 + 0.6 * S.realization) * (0.9 + 0.1 * Math.sin(t * 7));
+    g *= 1 - S.garble * (Math.random() < 0.35 ? 0.85 : 0);
+    g = Math.max(g, S.spike, pip * 0.8);
+    windGlow.copper.value = THREE.MathUtils.clamp(g * 0.75, 0, 1);
+    windGlow.gold.value = THREE.MathUtils.clamp(g * 1.1, 0, 1);
+  }
 
   // brushes ride the string; glow shows where the energy is
   stepString(dt);

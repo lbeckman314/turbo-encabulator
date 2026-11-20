@@ -115,6 +115,9 @@
 
   <!-- ============ Write-up ============ -->
   <main id="post" class="post">
+    <!-- The write-up between these markers is generated from post.md by build.mjs:
+         edit post.md, then run `npm run build`. -->
+    <!-- post:start -->
     <header class="post-head">
       <h1>Building a Turboencabulator</h1>
       <div class="meta">
@@ -123,31 +126,12 @@
       </div>
     </header>
 
-    <p>
-      Somewhere in a drawer of engineering folklore sits a two-page General Electric handbook sheet for an
-      instrument called the <em>Turboencabulator</em>. It has a photograph, a function, ratings, accessories,
-      specifications and reference texts in five languages. It does not have a single word that means anything.
-      I wanted to build one anyway, and the machine above is the result: a comic-shaded 3D model you can spin,
-      explode, engage and, for reasons that will become clear, pluck like a harp.
-    </p>
-
     <aside class="callout">
-      <div class="callout-label">Heads up</div>
-      <p>
-        Nothing on this page measures inverse reactive current. The machine's behaviour is invented to fit the
-        datasheet's descriptions, the way a prop department would. The rendering and the physics, on the other
-        hand, are real, and that's mostly what this post is about.
-      </p>
+    <div class="callout-label">Heads up</div>
+    <p>Nothing on this page measures inverse reactive current. The machine's behaviour is invented to fit the datasheet's descriptions, the way a prop department would. The rendering and the physics, on the other hand, are real, and that's mostly what this post is about.</p>
     </aside>
-
     <h2 id="source">The source material</h2>
-    <p>
-      The text is older than the sheet. It was written by a British engineering student, John Hellins Quick, and
-      published in 1944 in the student journal of the Institution of Electrical Engineers; <em>Time</em> reprinted it
-      in 1946, and it has been passed around (and performed, straight-faced, on film) ever since. The version I worked
-      from is GE handbook sheet HBK-8359, dated December 31, 1962, which dresses the joke up as a real product listing.
-    </p>
-
+    <p>The text is older than the sheet. It was written by a British engineering student, John Hellins Quick, and published in 1944 in the student journal of the Institution of Electrical Engineers; <em>Time</em> reprinted it in 1946, and it has been passed around (and performed, straight-faced, on film) ever since. The version I worked from is GE handbook sheet HBK-8359, dated December 31, 1962, which dresses the joke up as a real product listing.</p>
     <figure class="wide">
       <div class="sheet-pair">
         <a href="images/hbk-8359-p801.webp"><img src="images/hbk-8359-p801.webp" alt="Page 801 of handbook sheet HBK-8359: a photograph of the Turboencabulator, a cylindrical machine with a fan at one end on a curved base." loading="lazy" width="1280" height="1790" /></a>
@@ -155,50 +139,70 @@
       </div>
       <figcaption>Figure 1 · HBK-8359, pages 801–802. Note “Dimension Drawings: On delivery.”</figcaption>
     </figure>
-
-    <p>
-      That last detail sets the terms of the project. There are no blueprints, so everything is reverse-engineered
-      from Fig. 1, a single grainy photo, and the sheet's descriptions of parts that don't exist. The photo turns out
-      to be enough. The machine is a handful of simple solids:
-    </p>
-
+    <p>That last detail sets the terms of the project. There are no blueprints, so everything is reverse-engineered from Fig. 1, a single grainy photo, and the sheet's descriptions of parts that don't exist. The photo turns out to be enough. The machine is a handful of simple solids:</p>
     <div class="table-wrap">
-      <table>
-        <thead><tr><th>Datasheet part</th><th>In Fig. 1</th><th>Built from</th></tr></thead>
-        <tbody>
-          <tr><td>Malleable logarithmic casing</td><td>The long drum</td><td>Open cylinder + end cap</td></tr>
-          <tr><td>Pentametric fan</td><td>Six blades on the intake</td><td>Squashed spheres, pitched</td></tr>
-          <tr><td>Semi-boloid stator slots</td><td>Ring of tubes round the fan</td><td>30 instanced cylinders</td></tr>
-          <tr><td>Grouting brushes ×47</td><td>The comb of loops on top</td><td>Half-torus arches + tufts</td></tr>
-          <tr><td>Tremie pipes</td><td>The rail above them</td><td>A thin cylinder, valve at one end</td></tr>
-          <tr><td>Panel meters</td><td>Two dials, three buttons</td><td>Rounded boxes, canvas-drawn dials</td></tr>
-          <tr><td>Prefabulated Amulite baseplate</td><td>The S-curved plinth</td><td>An extruded sine-edged shape</td></tr>
-        </tbody>
-      </table>
+    <table>
+    <thead>
+    <tr>
+    <th>Datasheet part</th>
+    <th>In Fig. 1</th>
+    <th>Built from</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>Malleable logarithmic casing</td>
+    <td>The long drum</td>
+    <td>Open cylinder + end cap</td>
+    </tr>
+    <tr>
+    <td>Pentametric fan</td>
+    <td>Six blades on the intake</td>
+    <td>Squashed spheres, pitched</td>
+    </tr>
+    <tr>
+    <td>Semi-boloid stator slots</td>
+    <td>Ring of tubes round the fan</td>
+    <td>30 instanced cylinders</td>
+    </tr>
+    <tr>
+    <td>Grouting brushes ×47</td>
+    <td>The comb of loops on top</td>
+    <td>Half-torus arches + tufts</td>
+    </tr>
+    <tr>
+    <td>Tremie pipes</td>
+    <td>The rail above them</td>
+    <td>A thin cylinder, valve at one end</td>
+    </tr>
+    <tr>
+    <td>Panel meters</td>
+    <td>Two dials, three buttons</td>
+    <td>Rounded boxes, canvas-drawn dials</td>
+    </tr>
+    <tr>
+    <td>Prefabulated Amulite baseplate</td>
+    <td>The S-curved plinth</td>
+    <td>An extruded sine-edged shape</td>
+    </tr>
+    <tr>
+    <td>Lotus-o-delta main winding</td>
+    <td>Hidden inside the drum</td>
+    <td>21 swept helix turns, every seventh in gold</td>
+    </tr>
+    <tr>
+    <td>Differential girdle spring</td>
+    <td>Hidden inside the drum</td>
+    <td>A swept spiral that winds with the drive</td>
+    </tr>
+    </tbody>
+    </table>
     </div>
-
-    <p>
-      Each part is a <code>THREE.Group</code> built in its assembled position, plus two extra numbers: an
-      <em>explode</em> vector (where it goes when the machine comes apart) and an <em>anchor</em> (where its label's
-      leader line attaches). Assembled is always the origin, so exploding is just tweening each group's position to
-      its vector.
-    </p>
-
+    <p>Each part is a <code>THREE.Group</code> built in its assembled position, plus two extra numbers: an <em>explode</em> vector (where it goes when the machine comes apart) and an <em>anchor</em> (where its label's leader line attaches). Assembled is always the origin, so exploding is just tweening each group's position to its vector.</p>
     <h2 id="comic">Drawing it like a comic</h2>
-    <p>
-      The look comes from Raj Shekhar's <a href="https://rshekhar.com/voyager/">Voyager</a>, which renders the
-      spacecraft like a page from a technical comic: a few flat colours, heavy ink outlines and shading done with
-      halftone dots. Three tricks get you most of the way there.
-    </p>
-
+    <p>The look comes from Raj Shekhar's <a href="https://rshekhar.com/voyager/">Voyager</a>, which renders the spacecraft like a page from a technical comic: a few flat colours, heavy ink outlines and shading done with halftone dots. Three tricks get you most of the way there.</p>
     <h3>1 · Three tones, two of them dots</h3>
-    <p>
-      Each surface gets one flat palette colour. The fragment shader compares the surface normal with a light
-      direction: lit faces keep the flat colour, faces turning away get a screen of slightly darker dots, and
-      faces in shadow get ink dots. The dots are laid out in <em>screen</em> space on a 45° grid, as in print, so
-      they stay the same size however close you zoom. Try it:
-    </p>
-
+    <p>Each surface gets one flat palette colour. The fragment shader compares the surface normal with a light direction: lit faces keep the flat colour, faces turning away get a screen of slightly darker dots, and faces in shadow get ink dots. The dots are laid out in <em>screen</em> space on a 45° grid, as in print, so they stay the same size however close you zoom. Try it:</p>
     <figure>
       <div class="fig-box">
         <canvas id="fig-halftone" class="fig-canvas square" aria-label="A sphere shaded with halftone dots"></canvas>
@@ -210,73 +214,37 @@
       </div>
       <figcaption>Figure 2 · The same banding and dot screen as the machine's shader, drawn on a 2D canvas.</figcaption>
     </figure>
-
-<pre><code>float l = dot(n, uLight);
-vec3 c = uBase;
-if (l &lt; 0.3)   c = mix(uBase, uBase * 0.7, screen(r));    // mid-tone dots
-if (l &lt; -0.12) c = mix(uBase * 0.78, uInk, screen(0.38)); // ink dots</code></pre>
-
-    <p>
-      The light is fixed relative to the <em>camera</em>, not the world, so the shading reads like a drawing as you
-      orbit, rather than like an object turning under a lamp.
-    </p>
-
+    <pre><code class="language-glsl">float l = dot(n, uLight);
+    vec3 c = uBase;
+    if (l &lt; 0.3)   c = mix(uBase, uBase * 0.7, screen(r));    // mid-tone dots
+    if (l &lt; -0.12) c = mix(uBase * 0.78, uInk, screen(0.38)); // ink dots
+    </code></pre>
+    <p>The light is fixed relative to the <em>camera</em>, not the world, so the shading reads like a drawing as you orbit, rather than like an object turning under a lamp.</p>
     <h3>2 · Ink outlines from an inverted hull</h3>
-    <p>
-      Every mesh gets a twin drawn with only its back faces, pushed outwards so its rim peeks out around the
-      silhouette as a dark line. The push happens in the vertex shader, in <em>pixels</em>, so the line keeps the
-      same weight at any distance. Hard-edged geometry like a cylinder's cap has split normals that would crack the
-      hull at the corners, so each vertex is pushed along the average normal of every vertex at the same position.
-    </p>
-
-<pre><code>vec4 clip = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-vec4 nc   = projectionMatrix * modelViewMatrix * vec4(pos + outNormal * 0.01, 1.0);
-vec2 d = (nc.xy / nc.w - clip.xy / clip.w) * uView;            // normal, in pixels
-clip.xy += normalize(d) * uLine * 2.0 / uView * clip.w;          // push uLine px out</code></pre>
-
+    <p>Every mesh gets a twin drawn with only its back faces, pushed outwards so its rim peeks out around the silhouette as a dark line. The push happens in the vertex shader, in <em>pixels</em>, so the line keeps the same weight at any distance. Hard-edged geometry like a cylinder's cap has split normals that would crack the hull at the corners, so each vertex is pushed along the average normal of every vertex at the same position.</p>
+    <pre><code class="language-glsl">vec4 clip = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    vec4 nc   = projectionMatrix * modelViewMatrix * vec4(pos + outNormal * 0.01, 1.0);
+    vec2 d = (nc.xy / nc.w - clip.xy / clip.w) * uView;            // normal, in pixels
+    clip.xy += normalize(d) * uLine * 2.0 / uView * clip.w;          // push uLine px out
+    </code></pre>
     <h3>3 · Fade through the dots</h3>
-    <p>
-      Parts don't fade in with transparency; they dissolve through the same dot screen, each dot shrinking from
-      nothing. It's one line in the fragment shader, and it keeps the intro in the printed-page idiom.
-    </p>
-
+    <p>Parts don't fade in with transparency; they dissolve through the same dot screen, each dot shrinking from nothing. It's one line in the fragment shader, and it keeps the intro in the printed-page idiom.</p>
     <h2 id="anime">Choreography with anime.js</h2>
-    <p>
-      anime.js is usually pointed at DOM elements, but it will animate any plain JavaScript object, which means it
-      can drive a 3D scene directly: <code>mesh.position</code>, a shader uniform's <code>value</code>, or a state
-      object the render loop reads. The whole machine is one such object, and engaging it is a timeline:
-    </p>
-
-<pre><code>createTimeline()
-  .add(lamps, { g: [0, 1], delay: stagger(160) }, 0)          // lamps light in turn
-  .add(S, { inrush: 1, ease: 'outExpo' }, 520)                // inrush spike…
-  .add(S, { inrush: 0.62, ease: 'outElastic(1, .35)' }, 940)  // …settles with a wobble
-  .add(S, { rpm: 1, duration: 2800 }, 600)                    // fan spins up
-  .add(S, { realization: 0.874, ease: 'outQuart' }, 1100);</code></pre>
-
-    <p>
-      <code>stagger()</code> does the rest: parts assemble one after another in the intro, the 47 brushes drop in
-      with a bounce, and labels pop in down the list when you explode the machine.
-    </p>
-
+    <p>anime.js is usually pointed at DOM elements, but it will animate any plain JavaScript object, which means it can drive a 3D scene directly: <code>mesh.position</code>, a shader uniform's <code>value</code>, or a state object the render loop reads. The whole machine is one such object, and engaging it is a timeline:</p>
+    <pre><code class="language-js">createTimeline()
+      .add(lamps, { g: [0, 1], delay: stagger(160) }, 0)          // lamps light in turn
+      .add(S, { inrush: 1, ease: 'outExpo' }, 520)                // inrush spike…
+      .add(S, { inrush: 0.62, ease: 'outElastic(1, .35)' }, 940)  // …settles with a wobble
+      .add(S, { rpm: 1, duration: 2800 }, 600)                    // fan spins up
+      .add(S, { realization: 0.874, ease: 'outQuart' }, 1100);
+    </code></pre>
+    <p><code>stagger()</code> does the rest: parts assemble one after another in the intro, the 47 brushes drop in with a bounce, and labels pop in down the list when you explode the machine.</p>
     <h2 id="string">Forty-seven brushes on a string</h2>
-    <p>
-      At first the brushes simply bobbed in a travelling sine wave, which looked nice and meant nothing. Now each
-      brush is a mass tied to its neighbours, which makes the row a discretized vibrating string:
-    </p>
-
+    <p>At first the brushes simply bobbed in a travelling sine wave, which looked nice and meant nothing. Now each brush is a mass tied to its neighbours, which makes the row a discretized vibrating string:</p>
     <div class="equation" role="math" aria-label="u double-dot sub i equals c squared times the quantity u sub i minus 1 minus 2 u sub i plus u sub i plus 1, minus gamma u dot sub i, minus k u sub i">
       <var>ü</var><sub>i</sub> = <var>c</var>² (<var>u</var><sub>i−1</sub> − 2<var>u</var><sub>i</sub> + <var>u</var><sub>i+1</sub>) − <var>γ</var> <var>u̇</var><sub>i</sub> − <var>k</var> <var>u</var><sub>i</sub>
     </div>
-
-    <p>
-      <var>u</var> is each brush's height, <var>c</var> the wave speed (about 30 brushes a second), <var>γ</var> the
-      damping (the Viscosity slider) and <var>k</var> a weak pull back to rest. The ends are imaginary brushes: leave
-      one at zero and the string is pinned there, so waves reflect; move one to a waveform and that end is driven.
-      That's all the wave-shape selector does. Integration is semi-implicit Euler at 240 steps a second, which keeps
-      <var>c</var>·<var>h</var> well under 1, the limit past which the string explodes. Here's the same string, flat:
-    </p>
-
+    <p><var>u</var> is each brush's height, <var>c</var> the wave speed (about 30 brushes a second), <var>γ</var> the damping (the Viscosity slider) and <var>k</var> a weak pull back to rest. The ends are imaginary brushes: leave one at zero and the string is pinned there, so waves reflect; move one to a waveform and that end is driven. That's all the wave-shape selector does. Integration is semi-implicit Euler at 240 steps a second, which keeps <var>c</var>·<var>h</var> well under 1, the limit past which the string explodes. Here's the same string, flat:</p>
     <figure>
       <div class="fig-box">
         <canvas id="fig-string" class="fig-canvas strip" aria-label="A row of 47 beads on a string. Drag a bead to pluck it."></canvas>
@@ -288,37 +256,44 @@ clip.xy += normalize(d) * uLine * 2.0 / uView * clip.w;          // push uLine p
       </div>
       <figcaption>Figure 3 · Drag a bead, or turn on the drive and watch the reflections interfere.</figcaption>
     </figure>
-
-    <p>
-      Grabbing a brush in 3D needed one more trick. The brushes are a few pixels wide, so instead of asking the ray
-      to hit one, the code finds where the pointer's ray passes closest to the whole row of brushes, and accepts
-      anything within a brush-width or so (as long as the casing isn't in the way). Dragging then happens on a
-      vertical plane facing the camera, so up always means up.
-    </p>
-
+    <p>Grabbing a brush in 3D needed one more trick. The brushes are a few pixels wide, so instead of asking the ray to hit one, the code finds where the pointer's ray passes closest to the whole row of brushes, and accepts anything within a brush-width or so (as long as the casing isn't in the way). Dragging then happens on a vertical plane facing the camera, so up always means up.</p>
     <h2 id="shapes">Wave shapes have consequences</h2>
-    <p>
-      The datasheet has opinions about waveforms, so the selector does more than reshape the drive:
-    </p>
-
+    <p>The datasheet has opinions about waveforms, so the selector does more than reshape the drive:</p>
     <div class="table-wrap">
-      <table>
-        <thead><tr><th>Shape</th><th>What happens</th></tr></thead>
-        <tbody>
-          <tr><td>Sinusoidal</td><td>Nominal. Realization settles at 87.4%.</td></tr>
-          <tr><td>Cosinusoidal</td><td>Drives from the opposite end. The sheet says cosine-wave directors must feed a Phase Inverter first, so until you fit one the drive is garbled, the amber lamp blinks and realization collapses to 31%.</td></tr>
-          <tr><td>Tangential</td><td>Every asymptote pegs the inrush needle, rattles the tremie pipes and flashes the red lamp.</td></tr>
-          <tr><td>Pipusoidal</td><td>The pentametric fan surges on each pip, and the machine shudders with it.</td></tr>
-        </tbody>
-      </table>
+    <table>
+    <thead>
+    <tr>
+    <th>Shape</th>
+    <th>What happens</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>Sinusoidal</td>
+    <td>Nominal. Realization settles at 87.4%.</td>
+    </tr>
+    <tr>
+    <td>Cosinusoidal</td>
+    <td>Drives from the opposite end. The sheet says cosine-wave directors must feed a Phase Inverter first, so until you fit one the drive is garbled, the amber lamp blinks and realization collapses to 31%.</td>
+    </tr>
+    <tr>
+    <td>Tangential</td>
+    <td>Every asymptote pegs the inrush needle, rattles the tremie pipes and flashes the red lamp.</td>
+    </tr>
+    <tr>
+    <td>Pipusoidal</td>
+    <td>The pentametric fan surges on each pip, and the machine shudders with it.</td>
+    </tr>
+    </tbody>
+    </table>
     </div>
-
     <h2 id="credits">Credits</h2>
     <ul>
-      <li>Original text: John Hellins Quick, 1944. Handbook sheet: General Electric, HBK-8359, 1962.</li>
-      <li>Visual style after Raj Shekhar's <a href="https://rshekhar.com/voyager/">Voyager</a>.</li>
-      <li>Built with <a href="https://threejs.org">three.js</a> and <a href="https://animejs.com">anime.js</a>; set in Literata, Archivo and Martian Mono.</li>
+    <li>Original text: John Hellins Quick, 1944. Handbook sheet: General Electric, HBK-8359, 1962.</li>
+    <li>Visual style after Raj Shekhar's <a href="https://rshekhar.com/voyager/">Voyager</a>.</li>
+    <li>Built with <a href="https://threejs.org">three.js</a> and <a href="https://animejs.com">anime.js</a>; set in Literata, Archivo and Martian Mono.</li>
     </ul>
+    <!-- post:end -->
 
     <footer class="post-foot">
       <a href="#hero">↑ Back to the machine</a>

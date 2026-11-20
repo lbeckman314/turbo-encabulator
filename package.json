@@ -1,0 +1,15 @@
+{
+  "name": "turbo-encabulator",
+  "private": true,
+  "type": "module",
+  "description": "Builds the write-up in index.html from post.md.",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "markdown-it": "^15.0.3",
+    "markdown-it-attrs": "^5.0.1",
+    "markdown-it-container": "^4.0.0"
+  }
+}
