@@ -10,7 +10,7 @@ Nothing on this page measures inverse reactive current. The machine's behaviour 
 
 ## The source material {#source}
 
-The text is older than the sheet. It was written by a British engineering student, John Hellins Quick, and published in 1944 in the student journal of the Institution of Electrical Engineers; _Time_ reprinted it in 1946, and it has been passed around (and performed, straight-faced, on film) ever since. The version I worked from is GE handbook sheet HBK-8359, dated December 31, 1962, which dresses the joke up as a real product listing.
+The text is older than the sheet. It was written by a British engineering student, John Hellins Quick, and published in 1944 in the student journal of the Institution of Electrical Engineers; _Time_ quoted it in April 1946, in a piece called “For Nofer Trunnions”, and it has been passed around (and performed, straight-faced, on film) ever since. The version I worked from is GE handbook sheet HBK-8359, dated December 31, 1962, which dresses the joke up as a real product listing.
 
 @include partials/timeline.html
 

@@ -59,6 +59,9 @@ html, body {
   cursor: grab;
 }
 #scene:active { cursor: grabbing; }
+#scene:focus { outline: none; }
+/* The ring goes on the hero: the canvas runs on below it (--star-tail). */
+.hero:has(#scene:focus-visible) { outline: 2px solid var(--gold-deep); outline-offset: -6px; }
 #scene.hovering { cursor: pointer; }
 
 /* ---------- title ---------- */
@@ -496,6 +499,11 @@ kbd {
 }
 .fig-canvas.square { max-width: 340px; aspect-ratio: 1; margin: 0 auto; cursor: zoom-in; touch-action: pan-x pan-y; background: rgb(31, 42, 70); }
 .fig-canvas.square.zoomed { cursor: grab; touch-action: none; }
+.fig-canvas:focus { outline: none; }
+.fig-canvas:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 3px; }
+.fig-zoom { position: relative; max-width: 340px; margin: 0 auto; }
+.fig-zoom-reset { position: absolute; top: 10px; right: 10px; background: var(--card); }
+.fig-zoom-reset[hidden] { display: none; }
 .fig-canvas.square.zoomed:active { cursor: grabbing; }
 .fig-canvas.strip { height: 180px; cursor: grab; }
 .fig-controls {
@@ -687,10 +695,29 @@ kbd {
   color: var(--muted);
   white-space: nowrap;
 }
+/* Phones: the date goes above its entry, so the text gets the full width. */
+@media (max-width: 560px) {
+  .timeline { --tl-date-w: 0px; --tl-gap: 1.75rem; }
+  .timeline li { grid-template-columns: 1fr; padding-left: var(--tl-gap); }
+  .timeline .tl-date { text-align: left; }
+}
 .timeline a { color: inherit; text-decoration: none; }
 .timeline a:hover {
   color: inherit;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+}
+
+/* Read by screen readers, not shown. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
