@@ -63,7 +63,7 @@ function halftoneFigure() {
 
     const dot = +dotIn.value * DPR;
     const ink = inkIn.checked;
-    const R = size * 0.38;
+    const R = size * 0.38 * zoom; // the dots and the outline keep their size
     const line = 2.6 * DPR;
     const c = size / 2;
     const screen = (px, py, r) => {
@@ -108,6 +108,81 @@ function halftoneFigure() {
     lightOut.textContent = `${(+lightIn.value).toString().replace('-', '−')}°`;
     dotOut.textContent = `${dotIn.value} px`;
   }
+
+  // Zoom and turn, like the main model: scroll or pinch to zoom, drag
+  // sideways to swing the light around.
+  const ZMIN = 0.5, ZMAX = 2.5;
+  let zoom = 1;
+  const setZoom = (z) => {
+    const next = Math.min(ZMAX, Math.max(ZMIN, z));
+    if (next === zoom) return false;
+    zoom = next;
+    redraw();
+    return true;
+  };
+
+  // While the page is still moving (scrolling past the figure, trackpad
+  // momentum), the wheel keeps scrolling; at a zoom limit it scrolls too, so
+  // the figure never traps you mid-article. Ctrl/⌘ (trackpad pinch) always zooms.
+  let lastScroll = 0;
+  window.addEventListener('scroll', () => (lastScroll = performance.now()), { passive: true });
+  cv.addEventListener('wheel', (e) => {
+    const pinch = e.ctrlKey || e.metaKey;
+    if (!pinch && performance.now() - lastScroll < 300) return;
+    const k = Math.exp(-e.deltaY * (pinch ? 0.01 : 0.0015));
+    if (setZoom(zoom * k) || pinch) e.preventDefault();
+  }, { passive: false });
+
+  const pts = new Map(); // active pointers
+  let gesture = null;
+  const spread = () => {
+    const [a, b] = [...pts.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+  cv.addEventListener('pointerdown', (e) => {
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, multi: pts.size > 0 });
+    if (pts.size > 1) pts.forEach((p) => (p.multi = true));
+    try { cv.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
+    gesture = pts.size === 2
+      ? { pinch: true, d0: spread(), z0: zoom }
+      : { pinch: false, x0: e.clientX, a0: +lightIn.value };
+  });
+  cv.addEventListener('pointermove', (e) => {
+    if (!pts.has(e.pointerId)) return;
+    const pt = pts.get(e.pointerId);
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    if (!gesture) return;
+    if (gesture.pinch && pts.size === 2) {
+      setZoom(gesture.z0 * (spread() / Math.max(1, gesture.d0)));
+    } else if (!gesture.pinch) {
+      // drag across the whole figure = one full turn of the light
+      const turn = ((e.clientX - gesture.x0) / cv.clientWidth) * 360;
+      let a = gesture.a0 + turn;
+      a = ((((a + 180) % 360) + 360) % 360) - 180;
+      lightIn.value = String(Math.round(a));
+      redraw();
+    }
+  });
+  let lastTap = 0;
+  const lift = (e) => {
+    const pt = pts.get(e.pointerId);
+    pts.delete(e.pointerId);
+    // double-tap (one finger, no movement) resets the zoom, like double-click
+    if (pt && e.type === 'pointerup' && e.pointerType !== 'mouse' && !pt.multi &&
+        Math.hypot(pt.x - pt.sx, pt.y - pt.sy) < 8) {
+      const now = performance.now();
+      if (now - lastTap < 300) setZoom(1);
+      lastTap = now;
+    }
+    // a finger left a pinch: carry on dragging with the other, from here
+    gesture = pts.size === 1
+      ? { pinch: false, x0: [...pts.values()][0].x, a0: +lightIn.value }
+      : null;
+  };
+  cv.addEventListener('pointerup', lift);
+  cv.addEventListener('pointercancel', lift);
+  cv.addEventListener('dblclick', () => setZoom(1));
 
   let queued = false;
   const redraw = () => {
@@ -246,5 +321,26 @@ function stringFigure() {
   cv.addEventListener('pointercancel', end);
 }
 
+/* ============================================================
+ * Videos: load YouTube's player only when asked
+ * ========================================================== */
+function videos() {
+  for (const a of document.querySelectorAll('a.yt[data-yt]')) {
+    a.addEventListener('click', (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return; // let "open in new tab" work
+      e.preventDefault();
+      const f = document.createElement('iframe');
+      f.src = `https://www.youtube-nocookie.com/embed/${a.dataset.yt}?autoplay=1&rel=0`;
+      f.title = a.getAttribute('aria-label').replace(/^Play video: /, '');
+      f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      f.allowFullscreen = true;
+      f.className = 'yt';
+      a.replaceWith(f);
+      f.focus();
+    });
+  }
+}
+
 halftoneFigure();
 stringFigure();
+videos();

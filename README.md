@@ -32,6 +32,8 @@ Besides ordinary Markdown (including tables and raw HTML such as `<var>`), `post
 - `## Heading {#id}` to set a heading's id
 - `::: callout Label` … `:::` for a labelled aside
 - `@include partials/<file>.html` on its own line to insert an HTML partial, used for the figures, the handbook images and the equation
+- `@youtube <id> <caption>`, one per line, for videos; consecutive lines form a grid. Each shows a thumbnail and only loads YouTube's player (from the privacy-enhanced youtube-nocookie.com) when clicked
+- `[name](#part:<id>)` to link a phrase to a part of the machine (ids such as `casing`, `fan`, `winding` are the first argument to `part(...)` in `main.js`). Hovering the phrase lights the part up, clicking it scrolls up to show it, and clicking the part on the machine scrolls back to the phrase.
 
 ## Files
 

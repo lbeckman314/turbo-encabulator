@@ -7,6 +7,8 @@
 // Markdown extras:
 //   front matter      title, date (YYYY-MM-DD) and tags (comma-separated)
 //   @include <path>   on its own line: pastes in an HTML partial (figures etc.)
+//   @youtube <id> <caption>  one per line; consecutive lines form a grid of
+//                     click-to-load videos (thumbnail until played)
 //   ::: callout Label  a boxed aside with a label, closed by :::
 //   ## Heading {#id}  sets the heading's id
 // Raw HTML (e.g. <var>) is allowed anywhere.
@@ -50,6 +52,21 @@ function frontMatter(text) {
   return { meta, body: text.slice(m[0].length) };
 }
 
+// A YouTube video that costs nothing until played: a thumbnail link to the
+// video, which figures.js swaps for a privacy-enhanced (youtube-nocookie)
+// player on click. Without JavaScript the link simply opens YouTube.
+function video(id, caption) {
+  if (!/^[\w-]{11}$/.test(id)) throw new Error(`@youtube: "${id}" isn't a video id`);
+  const plain = md.utils.escapeHtml(caption.replace(/[*_`]/g, ''));
+  return `<figure class="video">
+  <a class="yt" href="https://www.youtube.com/watch?v=${id}" data-yt="${id}" target="_blank" rel="noopener" aria-label="Play video: ${plain}">
+    <img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy" width="480" height="360" />
+    <span class="yt-play" aria-hidden="true"></span>
+  </a>
+  <figcaption>${md.renderInline(caption)}</figcaption>
+</figure>`;
+}
+
 function header({ title, date, tags }) {
   const esc = md.utils.escapeHtml;
   const when = date
@@ -72,16 +89,26 @@ function build() {
   const { meta, body } = frontMatter(readFileSync(SOURCE, 'utf8'));
   // @include lines become the partial's HTML (a blank line either side keeps
   // markdown-it treating it as a block of raw HTML).
-  const expanded = body.replace(/^@include\s+(\S+)\s*$/gm, (_, p) => `\n${readFileSync(join(root, p), 'utf8').trim()}\n`);
+  const expanded = body
+    .replace(/^@include\s+(\S+)\s*$/gm, (_, p) => `\n${readFileSync(join(root, p), 'utf8').trim()}\n`)
+    .replace(/(?:^@youtube[ \t].*(?:\n|$))+/gm, (block) => `\n<div class="videos">\n${
+      block.trim().split('\n').map((line) => video(...line.match(/^@youtube\s+(\S+)\s*(.*)$/).slice(1))).join('\n')
+    }\n</div>\n\n`);
   const html = header(meta) + '\n' + md.render(expanded);
 
   const page = readFileSync(PAGE, 'utf8');
   const a = page.indexOf(START), b = page.indexOf(END);
   if (a < 0 || b < a) throw new Error(`index.html needs ${START} … ${END} markers`);
   const indent = page.slice(page.lastIndexOf('\n', a) + 1, a);
-  const out = page.slice(0, a + START.length) + '\n' +
-    html.trimEnd().split('\n').map((l) => (l ? indent + l : l)).join('\n') + '\n' +
-    indent + page.slice(b);
+  // Indent to match the page, except inside <pre>, where whitespace shows.
+  let inPre = false;
+  const lines = html.trimEnd().split('\n').map((l) => {
+    const out = l && !inPre ? indent + l : l;
+    if (/<pre[\s>]/.test(l)) inPre = true;
+    if (l.includes('</pre>')) inPre = false;
+    return out;
+  });
+  const out = page.slice(0, a + START.length) + '\n' + lines.join('\n') + '\n' + indent + page.slice(b);
   if (out !== page) writeFileSync(PAGE, out);
   console.log(`${new Date().toLocaleTimeString()}  built index.html from post.md${out === page ? ' (no change)' : ''}`);
 }

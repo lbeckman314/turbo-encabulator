@@ -309,7 +309,7 @@ const FLOOR_Y = -2.245;
 const base = part(
   'base',
   'Prefabulated Amulite baseplate',
-  'Net 134 lbs; shipping weight 213 lbs. Nobody is entirely sure where the other 79 go.',
+  'The original machine had a [[base plate of pre-famulated amulite]] surmounted by a malleable logarithmic casing…',
   [0, -1.1, 0],
   [2.25, -1.62, 0.6]
 );
@@ -360,7 +360,7 @@ const base = part(
 const posts = part(
   'posts',
   'Spurving bearing posts',
-  'The two main spurving bearings, aligned with the pentametric fan as the specification demands.',
+  '…in such a way that the two [[spurving bearings]] were in a direct line with the panametric fan.',
   [0, -0.55, 0],
   [-1.1, -1.35, 0.1]
 );
@@ -374,7 +374,7 @@ for (const x of [-1.1, 1.1]) {
 const casing = part(
   'casing',
   'Malleable logarithmic casing',
-  'Surmounts the baseplate in such a way that the spurving bearings line up with the fan. Amulite construction.',
+  '…a base plate of pre-famulated amulite surmounted by a [[malleable logarithmic casing]] in such a way that the two spurving bearings were in a direct line with the panametric fan.',
   [0, 0, 0],
   [-1.85, 0.72, 0.62]
 );
@@ -450,7 +450,7 @@ const HATCH_OUT = V(0, Math.sin(tm), Math.cos(tm)).multiplyScalar(0.45); // lift
 const winding = part(
   'winding',
   'Lotus-o-delta main winding',
-  'Of the normal lotus-o-delta type. Every seventh conductor is joined by a non-reversible tremie pipe, hence the gold turns. Glows with realization.',
+  '…it is produced by the [[modial interaction of magneto-reluctance and capacitive diractance]]. … The [[main winding]] was of the normal lotus-o-delta type…',
   [0, 0, 0],
   [-0.75, 0.5, 0.2]
 );
@@ -487,7 +487,7 @@ const windingMeshes = { copper: null, gold: null };
 const spring = part(
   'spring',
   'Differential girdle spring',
-  "Mounted on the 'up' end of the grammeters. Winds and unwinds with the drive to take up any side fumbling.",
+  '…every seventh conductor being connected by a non-reversible tremie pipe to the [[differential girdle spring]] on the “up” end of the grammeters.',
   [0, 0, 0],
   [1.45, 0.72, -0.05]
 );
@@ -511,7 +511,7 @@ spring.group.add(springRot);
 const stator = part(
   'stator',
   'Panandermic semi-boloid stator slots',
-  'Thirty slots ring the intake. The grouting brushes along the top sit adjacent to them, as is customary.',
+  'The main winding was of the normal lotus-o-delta type placed in [[panendermic semi-boloid slots]] of the stator…',
   [-0.95, 0, 0],
   [-2.15, -0.95, 0.4]
 );
@@ -536,7 +536,7 @@ const stator = part(
 const fan = part(
   'fan',
   'Pentametric fan',
-  'Six blades, despite the name. Spins up when engaged and negates the relative motion of conventional conductors.',
+  '…in a direct line with the [[panametric fan]]. The latter consisted simply of six [[hydrocoptic marzlevanes]]…',
   [-1.9, 0, 0],
   [-2.5, 0.9, 0.2]
 );
@@ -566,7 +566,7 @@ fan.group.add(rotor);
 const shaft = part(
   'shaft',
   'Ambifacient wane shaft',
-  'Carries six gyro-controlled antigravic marzelvanes, which keep internal precession firmly in check.',
+  '…six hydrocoptic marzlevanes, so fitted to the [[ambifacient lunar waneshaft]] that side fumbling was effectively prevented.',
   [1.05, 0, 0],
   [2.55, 0.3, 0]
 );
@@ -578,7 +578,7 @@ shaft.group.add(mesh(new THREE.SphereGeometry(0.075, 20, 14), PAL.gray, { positi
 const panel = part(
   'panel',
   'Panel meters',
-  'Left: inrush current. Right: percent realization. Covers treated with Shure Stat for a static build-up in under a second.',
+  '…a transmission that would not only supply [[inverse reactive current]] for use in unilateral phase detractors, but would also be capable of automatically synchronizing [[cardinal grammeters]].',
   [0, 0, 1.15],
   [1.05, 0.62, 1.05]
 );
@@ -685,7 +685,7 @@ const buttonMeshes = [];
 const badge = part(
   'badge',
   'Nameplate',
-  'Old catalog no. 6060606G6, now 125387GLC1. Ratings (standard): none. Ratings (optional): all.',
+  '',
   [0, 0, 0.8],
   [-0.75, -0.18, 1.05]
 );
@@ -737,7 +737,7 @@ badge.group.add(mesh(new RoundedBoxGeometry(1.5, 0.16, 0.03, 2, 0.012), PAL.gray
 const rail = part(
   'rail',
   'Differential tremie pipes',
-  'Non-reversible. Feeds a 5% solution of reminative tetraethyliodohexamine to each brush. Crapaloy (tungsten cowhide).',
+  '…every seventh conductor being connected by a [[non-reversible tremie pipe]] to the differential girdle spring…',
   [0, 1.35, 0],
   [1.6, 1.45, 0]
 );
@@ -750,7 +750,7 @@ rail.group.add(mesh(new THREE.TorusGeometry(0.05, 0.012, 8, 24), PAL.gold, { pos
 const brushes = part(
   'brushes',
   'Grouting brushes ×47',
-  'Manestically spaced and coupled like beads on a string. Drag one to pluck it; when engaged, the wave shape drives them from one end.',
+  '',
   [0, 0, 0],
   [-1.15, 1.42, 0.12]
 );
@@ -777,7 +777,7 @@ const brushStates = brushItems.map((b) => b.state);
 const inverter = part(
   'inverter',
   'Phase Inverter',
-  'With parametric negative-time compensators. Output conductance 17.8 ± 1 millimhos, to match the quasistatic regeneration oscillator.',
+  '',
   [0, -0.35, 0.95],
   [1.55, -0.75, 1.0]
 );
@@ -1171,6 +1171,13 @@ function setHovered(p) {
   hovered = p;
 }
 const isPluckable = (p) => p && (p.id === 'brushes' || p.id === 'rail');
+// Places in the write-up that name each part (filled in below, from links
+// written as [name](#part:<id>) in post.md).
+const refsByPart = {};
+const canHover = matchMedia('(hover: hover)').matches;
+// Whether clicking (or tapping again) on this part can take you to the text;
+// a click on the brushes or pipes plucks them instead.
+const linksToText = (p) => !!refsByPart[p.id] && !isPluckable(p);
 function showTip(p, x, y) {
   const changed = p !== hovered;
   setHovered(p);
@@ -1182,7 +1189,14 @@ function showTip(p, x, y) {
   }
   if (changed) {
     tip.querySelector('strong').textContent = p.name;
-    tip.querySelector('span').textContent = p.info;
+    // The part's excerpt from the original text, its own words picked out.
+    const quote = tip.querySelector('span');
+    quote.replaceChildren(...p.info.split(/\[\[|\]\]/).map((t, i) =>
+      i % 2 ? Object.assign(document.createElement('mark'), { textContent: t }) : document.createTextNode(t)));
+    quote.hidden = !p.info;
+    const more = tip.querySelector('.tip-more');
+    more.hidden = !linksToText(p);
+    more.textContent = canHover ? 'Click to find it in the text ↓' : 'Tap again to find it in the text ↓';
     tip.hidden = false;
     animate(tip, { opacity: [0, 1], translateY: [6, 0], duration: 220, ease: 'outQuad' });
   }
@@ -1242,8 +1256,10 @@ canvas.addEventListener('pointermove', (e) => {
   pointer.dirty = true;
   pointer.inside = true;
 });
-canvas.addEventListener('pointerleave', () => {
-  if (grab) return;
+canvas.addEventListener('pointerleave', (e) => {
+  // Touch fires pointerleave right after every tap; only a mouse leaving
+  // the canvas should clear the tooltip.
+  if (grab || e.pointerType !== 'mouse') return;
   pointer.inside = false;
   showTip(null);
 });
@@ -1266,9 +1282,102 @@ function endGrab(e) {
 canvas.addEventListener('pointercancel', endGrab);
 canvas.addEventListener('pointerup', (e) => {
   if (endGrab(e)) return;
-  if (e.pointerType === 'mouse' || !downAt) return;
-  if (Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8) showTip(pick(e.clientX, e.clientY), e.clientX, e.clientY - 120);
+  if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) >= 8) return; // a drag, not a click
+  const p = pick(e.clientX, e.clientY);
+  if (e.pointerType === 'mouse') {
+    if (p && linksToText(p)) showInText(p);
+    return;
+  }
+  // Touch: the first tap shows the datasheet entry; tapping the same part
+  // again goes to where the text mentions it.
+  if (p && p === hovered && !tip.hidden && linksToText(p)) showInText(p);
+  else showTip(p, e.clientX, e.clientY - 120);
 });
+
+/* ---------- linking the write-up and the machine ---------- */
+const INSIDE = new Set(['winding', 'spring']); // hidden under the casing until it's exploded
+const litRefs = (p, on) => refsByPart[p.id]?.forEach((a) => a.classList.toggle('lit', on));
+for (const a of document.querySelectorAll('a[href^="#part:"]')) {
+  const p = partById[a.getAttribute('href').slice('#part:'.length)];
+  if (!p) continue;
+  a.classList.add('part-ref');
+  a.title = `${p.name}: show it on the machine`;
+  (refsByPart[p.id] ||= []).push(a);
+  // Hovering a name lights the part up, if the machine is on screen.
+  a.addEventListener('pointerenter', () => {
+    litRefs(p, true);
+    if (heroVisible && !pointer.inside) setHovered(p);
+  });
+  a.addEventListener('pointerleave', () => {
+    litRefs(p, false);
+    if (hovered === p && !pointer.inside && tip.hidden) setHovered(null);
+  });
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    showOnMachine(p);
+  });
+}
+
+// Text -> machine: scroll up, flash the part's outline and show its entry
+// next to it. Parts inside the casing need the machine exploded to be seen.
+let showTimer = 0;
+function showOnMachine(p) {
+  finishIntro();
+  controls.autoRotate = false;
+  hero.scrollIntoView({ block: 'start' });
+  const exploding = INSIDE.has(p.id) && !S.exploded;
+  if (exploding) setExploded(true);
+  clearTimeout(showTimer);
+  showTimer = setTimeout(() => {
+    machine.updateMatrixWorld();
+    const { w, h } = heroSize();
+    const r = canvas.getBoundingClientRect();
+    const at = toScreen(new THREE.Vector3().copy(p.anchor).applyMatrix4(p.group.matrixWorld), w, h);
+    showTip(p, r.left + at.x, r.top + at.y);
+    animate(p.fx.hover, { value: [1, 0.25, 1, 0.25, 1], duration: 1500, ease: 'inOutSine' });
+    showTimer = setTimeout(() => {
+      if (hovered === p && !pointer.inside) showTip(null);
+    }, 4500);
+  }, exploding ? 1300 : 700);
+}
+
+// Machine -> text: scroll to the first mention and flash every mention.
+function showInText(p) {
+  const refs = refsByPart[p.id];
+  showTip(null);
+  setReturnTo(p);
+  refs[0].scrollIntoView({ block: 'center' });
+  for (const a of refs) {
+    a.classList.remove('flash');
+    void a.offsetWidth; // restart the animation
+    a.classList.add('flash');
+  }
+}
+document.addEventListener('animationend', (e) => e.target.classList?.remove('flash'));
+
+// "Back to the machine": shown while the machine is out of view. After a
+// jump from a part, it shows that part again on the way back.
+const toMachine = $('#to-machine');
+let returnTo = null;
+function setReturnTo(p) {
+  returnTo = p;
+}
+toMachine.addEventListener('click', (e) => {
+  e.preventDefault();
+  const p = returnTo;
+  setReturnTo(null);
+  if (p) showOnMachine(p);
+  else hero.scrollIntoView({ block: 'start' });
+});
+new IntersectionObserver(([entry]) => {
+  const away = entry.intersectionRatio < 0.2;
+  toMachine.classList.toggle('show', away);
+  // hidden from keyboard and screen readers while it isn't shown
+  toMachine.setAttribute('aria-hidden', String(!away));
+  toMachine.tabIndex = away ? 0 : -1;
+  // back at the machine by other means: forget the part
+  if (entry.intersectionRatio > 0.6) setReturnTo(null);
+}, { threshold: [0, 0.2, 0.6] }).observe(hero);
 
 /* ============================================================
  * Resize
