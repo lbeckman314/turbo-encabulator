@@ -1,11 +1,14 @@
 <figure>
   <div class="fig-box">
-    <canvas id="fig-halftone" class="fig-canvas square" aria-label="A sphere shaded with halftone dots"></canvas>
+    <div class="fig-zoom">
+      <canvas id="fig-halftone" class="fig-canvas square" aria-label="A sphere shaded with halftone dots. Pinch, double-tap, or press plus and minus to zoom; arrow keys pan; 0 resets."></canvas>
+      <button class="btn small fig-zoom-reset" type="button" hidden>Reset zoom</button>
+    </div>
     <div class="fig-controls">
       <label class="slider"><span>Light</span><input id="fig-ht-light" type="range" min="-180" max="180" value="-35" /><output id="fig-ht-light-out">−35°</output></label>
       <label class="slider"><span>Dot size</span><input id="fig-ht-dot" type="range" min="3" max="12" step="0.5" value="5" /><output id="fig-ht-dot-out">5 px</output></label>
       <label class="check"><input id="fig-ht-ink" type="checkbox" checked /> Ink outline</label>
     </div>
   </div>
-  <figcaption>Figure 2 · The same banding and dot screen as the machine's shader, drawn on a 2D canvas. Drag to move the light; scroll or pinch to zoom, and the dots keep their size.</figcaption>
+  <figcaption>Figure 2 · The same banding and dot screen as the machine's shader, drawn on a 2D canvas. Drag to move the light; scroll, pinch or double-tap to zoom in on the dots.</figcaption>
 </figure>

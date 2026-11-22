@@ -47,8 +47,30 @@ function halftoneFigure() {
   const lightOut = document.getElementById('fig-ht-light-out');
   const dotOut = document.getElementById('fig-ht-dot-out');
 
+  // Zoom and pan, as a magnifier over the printed page: `k` is the zoom and
+  // (cx, cy) the point of the figure at the centre of the view, as fractions
+  // of its width. The sphere is redrawn at every zoom, so the dots stay sharp.
+  const view = { k: 1, cx: 0.5, cy: 0.5 };
+  const K_MAX = 8;
+  const resetBtn = cv.parentElement.querySelector('.fig-zoom-reset');
+
+  // Mid-gesture (a pinch, a pan, a trackpad zoom) the figure is drawn at half
+  // resolution, a quarter of the pixels, so it keeps up on slower phones; it
+  // is redrawn sharp a moment after the gesture stops.
+  let gesturing = false;
+  let settle = 0;
+  const busy = () => {
+    gesturing = true;
+    clearTimeout(settle);
+    settle = setTimeout(() => {
+      gesturing = false;
+      redraw();
+    }, 150);
+  };
+
   function draw() {
-    const size = Math.max(1, Math.round(cv.clientWidth * DPR));
+    const scale = DPR * (gesturing ? 0.5 : 1);
+    const size = Math.max(1, Math.round(cv.clientWidth * scale));
     if (cv.width !== size) cv.width = cv.height = size;
     const img = ctx.createImageData(size, size);
     const d = img.data;
@@ -61,10 +83,10 @@ function halftoneFigure() {
     const ln = Math.hypot(lx, ly, lz);
     lx /= ln; ly /= ln; lz /= ln;
 
-    const dot = +dotIn.value * DPR;
+    const dot = +dotIn.value * scale;
     const ink = inkIn.checked;
-    const R = size * 0.38 * zoom; // the dots and the outline keep their size
-    const line = 2.6 * DPR;
+    const R = size * 0.38;
+    const line = 2.6 * scale;
     const c = size / 2;
     const screen = (px, py, r) => {
       // 45° screen-space grid, as in print
@@ -75,9 +97,13 @@ function halftoneFigure() {
       return fu * fu + fv * fv <= r * r;
     };
 
+    const zk = view.k;
+    const ox = view.cx * size - size / 2 / zk;
+    const oy = view.cy * size - size / 2 / zk;
     for (let y = 0; y < size; y++) {
+      const py = oy + (y + 0.5) / zk;
       for (let x = 0; x < size; x++) {
-        const px = x + 0.5, py = y + 0.5;
+        const px = ox + (x + 0.5) / zk;
         const dx = (px - c) / R, dy = (py - c) / R;
         const r2 = dx * dx + dy * dy;
         let col = PAPER; // lighter than the page so the ink outline reads
@@ -109,81 +135,6 @@ function halftoneFigure() {
     dotOut.textContent = `${dotIn.value} px`;
   }
 
-  // Zoom and turn, like the main model: scroll or pinch to zoom, drag
-  // sideways to swing the light around.
-  const ZMIN = 0.5, ZMAX = 2.5;
-  let zoom = 1;
-  const setZoom = (z) => {
-    const next = Math.min(ZMAX, Math.max(ZMIN, z));
-    if (next === zoom) return false;
-    zoom = next;
-    redraw();
-    return true;
-  };
-
-  // While the page is still moving (scrolling past the figure, trackpad
-  // momentum), the wheel keeps scrolling; at a zoom limit it scrolls too, so
-  // the figure never traps you mid-article. Ctrl/⌘ (trackpad pinch) always zooms.
-  let lastScroll = 0;
-  window.addEventListener('scroll', () => (lastScroll = performance.now()), { passive: true });
-  cv.addEventListener('wheel', (e) => {
-    const pinch = e.ctrlKey || e.metaKey;
-    if (!pinch && performance.now() - lastScroll < 300) return;
-    const k = Math.exp(-e.deltaY * (pinch ? 0.01 : 0.0015));
-    if (setZoom(zoom * k) || pinch) e.preventDefault();
-  }, { passive: false });
-
-  const pts = new Map(); // active pointers
-  let gesture = null;
-  const spread = () => {
-    const [a, b] = [...pts.values()];
-    return Math.hypot(a.x - b.x, a.y - b.y);
-  };
-  cv.addEventListener('pointerdown', (e) => {
-    pts.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, multi: pts.size > 0 });
-    if (pts.size > 1) pts.forEach((p) => (p.multi = true));
-    try { cv.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
-    gesture = pts.size === 2
-      ? { pinch: true, d0: spread(), z0: zoom }
-      : { pinch: false, x0: e.clientX, a0: +lightIn.value };
-  });
-  cv.addEventListener('pointermove', (e) => {
-    if (!pts.has(e.pointerId)) return;
-    const pt = pts.get(e.pointerId);
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    if (!gesture) return;
-    if (gesture.pinch && pts.size === 2) {
-      setZoom(gesture.z0 * (spread() / Math.max(1, gesture.d0)));
-    } else if (!gesture.pinch) {
-      // drag across the whole figure = one full turn of the light
-      const turn = ((e.clientX - gesture.x0) / cv.clientWidth) * 360;
-      let a = gesture.a0 + turn;
-      a = ((((a + 180) % 360) + 360) % 360) - 180;
-      lightIn.value = String(Math.round(a));
-      redraw();
-    }
-  });
-  let lastTap = 0;
-  const lift = (e) => {
-    const pt = pts.get(e.pointerId);
-    pts.delete(e.pointerId);
-    // double-tap (one finger, no movement) resets the zoom, like double-click
-    if (pt && e.type === 'pointerup' && e.pointerType !== 'mouse' && !pt.multi &&
-        Math.hypot(pt.x - pt.sx, pt.y - pt.sy) < 8) {
-      const now = performance.now();
-      if (now - lastTap < 300) setZoom(1);
-      lastTap = now;
-    }
-    // a finger left a pinch: carry on dragging with the other, from here
-    gesture = pts.size === 1
-      ? { pinch: false, x0: [...pts.values()][0].x, a0: +lightIn.value }
-      : null;
-  };
-  cv.addEventListener('pointerup', lift);
-  cv.addEventListener('pointercancel', lift);
-  cv.addEventListener('dblclick', () => setZoom(1));
-
   let queued = false;
   const redraw = () => {
     if (queued) return;
@@ -195,6 +146,134 @@ function halftoneFigure() {
   };
   [lightIn, dotIn, inkIn].forEach((el) => el.addEventListener('input', redraw));
   new ResizeObserver(redraw).observe(cv);
+
+  /* ---------- pinch, drag and double-tap to zoom ---------- */
+  const clampView = () => {
+    view.k = Math.min(K_MAX, Math.max(1, view.k));
+    const m = 0.5 / view.k;
+    view.cx = Math.min(1 - m, Math.max(m, view.cx));
+    view.cy = Math.min(1 - m, Math.max(m, view.cy));
+    // Zoomed in, one finger pans the figure; zoomed out, it scrolls the page.
+    const zoomed = view.k > 1.001;
+    cv.classList.toggle('zoomed', zoomed);
+    if (resetBtn) resetBtn.hidden = !zoomed;
+    redraw();
+  };
+  // Screen point, as fractions of the canvas, relative to its centre.
+  const frac = (e) => {
+    const r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width - 0.5, y: (e.clientY - r.top) / r.height - 0.5 };
+  };
+  // Zoom by `f`, keeping the figure point under screen point `s` in place.
+  const zoomAt = (s, f) => {
+    const k = Math.min(K_MAX, Math.max(1, view.k * f));
+    view.cx += s.x / view.k - s.x / k;
+    view.cy += s.y / view.k - s.y / k;
+    view.k = k;
+    clampView();
+  };
+  const resetView = () => {
+    Object.assign(view, { k: 1, cx: 0.5, cy: 0.5 });
+    clampView();
+  };
+  const panBy = (dx, dy) => {
+    view.cx -= dx / view.k;
+    view.cy -= dy / view.k;
+    clampView();
+  };
+
+  const pts = new Map(); // pointerId -> last screen point
+  let lastTap = null;
+  let moved = false;
+  // At 1x, a sideways drag swings the light around, like dragging turns the
+  // main model: across the whole figure is one full turn.
+  let lightDrag = null;
+  const pair = () => {
+    const [a, b] = [...pts.values()];
+    return { mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, dist: Math.hypot(a.x - b.x, a.y - b.y) };
+  };
+  cv.addEventListener('pointerdown', (e) => {
+    if (e.button > 0) return;
+    pts.set(e.pointerId, frac(e));
+    moved = pts.size > 1;
+    lightDrag = pts.size === 1 && view.k <= 1.001 ? { x0: frac(e).x, a0: +lightIn.value } : null;
+    try { cv.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
+  });
+  cv.addEventListener('pointermove', (e) => {
+    const prev = pts.get(e.pointerId);
+    if (!prev) return;
+    const before = pts.size === 2 ? pair() : null;
+    const p = frac(e);
+    pts.set(e.pointerId, p);
+    if (before) {
+      busy();
+      const after = pair();
+      if (before.dist > 0) zoomAt(after.mid, after.dist / before.dist);
+      panBy(after.mid.x - before.mid.x, after.mid.y - before.mid.y);
+    } else if (pts.size === 1 && view.k > 1.001) {
+      busy();
+      panBy(p.x - prev.x, p.y - prev.y);
+    } else if (pts.size === 1 && lightDrag) {
+      let a = lightDrag.a0 + (p.x - lightDrag.x0) * 360;
+      a = ((((a + 180) % 360) + 360) % 360) - 180;
+      if (+lightIn.value !== Math.round(a)) {
+        lightIn.value = String(Math.round(a));
+        busy();
+        redraw();
+      }
+    }
+    if (Math.hypot(p.x - prev.x, p.y - prev.y) > 0.002) moved = true;
+  });
+  const lift = (e) => {
+    if (!pts.delete(e.pointerId)) return;
+    lightDrag = null;
+    if (e.type !== 'pointerup' || moved || pts.size) return;
+    // Double-tap (or double-click) toggles between zoomed in and out.
+    const s = frac(e), now = performance.now();
+    if (lastTap && now - lastTap.t < 320 && Math.hypot(s.x - lastTap.s.x, s.y - lastTap.s.y) < 0.06) {
+      if (view.k > 1.001) resetView();
+      else zoomAt(s, 3);
+      lastTap = null;
+    } else lastTap = { s, t: now };
+  };
+  cv.addEventListener('pointerup', lift);
+  cv.addEventListener('pointercancel', lift);
+  // The wheel zooms, like the main model's. A trackpad pinch (ctrl/⌘+wheel)
+  // always does; a plain wheel only once the page has stopped moving, so
+  // scrolling past the figure keeps scrolling, and not at a zoom limit, so it
+  // never traps you mid-article.
+  let lastScroll = 0;
+  window.addEventListener('scroll', () => (lastScroll = performance.now()), { passive: true });
+  cv.addEventListener('wheel', (e) => {
+    const pinch = e.ctrlKey || e.metaKey;
+    if (!pinch) {
+      if (performance.now() - lastScroll < 300) return;
+      if (e.deltaY > 0 ? view.k <= 1.001 : view.k >= K_MAX - 0.001) return;
+    }
+    e.preventDefault();
+    busy();
+    zoomAt(frac(e), Math.exp(-e.deltaY * (pinch ? 0.01 : 0.0015)));
+  }, { passive: false });
+  // Safari's own pinch gesture would zoom the whole page.
+  cv.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  // Keyboard: + and − zoom on the centre, 0 resets, arrows pan while zoomed.
+  cv.tabIndex = 0;
+  cv.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const centre = { x: 0, y: 0 };
+    const pan = { ArrowLeft: [0.12, 0], ArrowRight: [-0.12, 0], ArrowUp: [0, 0.12], ArrowDown: [0, -0.12] }[e.key];
+    if (e.key === '+' || e.key === '=') zoomAt(centre, 1.5);
+    else if (e.key === '-' || e.key === '_') zoomAt(centre, 1 / 1.5);
+    else if (e.key === '0') resetView();
+    else if (pan && view.k > 1.001) panBy(...pan);
+    else return; // anything else (and arrows when not zoomed) does what it normally does
+    e.preventDefault();
+  });
+  resetBtn?.addEventListener('click', () => {
+    resetView();
+    cv.focus();
+  });
 }
 
 /* ============================================================
@@ -209,6 +288,9 @@ function stringFigure() {
   const dampIn = document.getElementById('fig-str-damp');
   const dampOut = document.getElementById('fig-str-damp-out');
   const driveIn = document.getElementById('fig-str-drive');
+  // The drive starts on, so the string moves by itself; not for readers who
+  // have asked their device for less motion.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) driveIn.checked = false;
   let phase = 0;
   let drive = 0; // eased 0..1 so toggling doesn't jolt the string
 

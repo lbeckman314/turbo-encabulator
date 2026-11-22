@@ -33,6 +33,11 @@ const PAL = {
 const hero = document.getElementById('hero');
 const canvas = document.getElementById('scene');
 const heroSize = () => ({ w: hero.clientWidth, h: hero.clientHeight });
+// The canvas runs on past the bottom of the hero (see --star-tail in the CSS),
+// so the stars can thin out across the gap above the write-up's title. The
+// camera still frames the machine in the hero itself; the tail is extra sky.
+const canvasH = () => canvas.clientHeight;
+const starFade = { value: 1 };
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(DPR);
 renderer.setClearColor(PAL.bg);
@@ -51,7 +56,13 @@ controls.autoRotateSpeed = 0.45;
 // fingers pinch to zoom (and twist to turn) instead.
 controls.enablePan = false;
 controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
-controls.addEventListener('start', () => (controls.autoRotate = false));
+controls.addEventListener('start', () => {
+  controls.autoRotate = false;
+  // A tapped part's tooltip would otherwise stay put while the part spins
+  // away. (A mouse's hover tooltip comes straight back on the next frame.)
+  showTip(null);
+  pointer.dirty = true;
+});
 
 const isNarrow = () => window.innerWidth < 720;
 const CAM_DIR = new THREE.Vector3(-0.58, 0.3, 0.76).normalize();
@@ -117,9 +128,20 @@ const camHome = (at) => {
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(pts, 3));
-  scene.add(new THREE.Points(g, new THREE.PointsMaterial({
+  const mat = new THREE.PointsMaterial({
     color: PAL.cream, size: 1.4 * DPR, sizeAttenuation: false, transparent: true, opacity: 0.55, depthWrite: false,
-  })));
+  });
+  // The stars thin out towards the bottom of the canvas, so space fades into
+  // the page instead of stopping at an edge. (Only the stars: the machine can
+  // reach down there too.) gl_FragCoord.y counts device pixels from the bottom;
+  // uFade is set on resize.
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uFade = starFade;
+    shader.fragmentShader = shader.fragmentShader
+      .replace('void main() {', 'uniform float uFade;\nvoid main() {')
+      .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( diffuse, opacity * smoothstep(0.0, uFade, gl_FragCoord.y) );');
+  };
+  scene.add(new THREE.Points(g, mat));
 }
 
 /* ============================================================
@@ -1158,11 +1180,24 @@ function brushRayHit(firstHit) {
   return { i: brushIndexAt(onRow), point: onRow.clone() };
 }
 
-function pick(x, y) {
+function pickAt(x, y) {
   rayFrom(x, y);
   const hit = raycaster.intersectObjects(pickables, false)[0];
   if (brushRayHit(hit)) return partById.brushes;
   return hit ? partById[hit.object.userData.part] : null;
+}
+// A fingertip is far less precise than a cursor, so a touch that misses
+// tries a ring of nearby points too: the centre first, then outward.
+const TOUCH_SLOP = [];
+for (const r of [8, 14]) for (let a = 0; a < 8; a++) TOUCH_SLOP.push([r * Math.cos((a * Math.PI) / 4), r * Math.sin((a * Math.PI) / 4)]);
+function pick(x, y, touch = false) {
+  const p = pickAt(x, y);
+  if (p || !touch) return p;
+  for (const [dx, dy] of TOUCH_SLOP) {
+    const q = pickAt(x + dx, y + dy);
+    if (q) return q;
+  }
+  return null;
 }
 function setHovered(p) {
   if (p === hovered) return;
@@ -1256,9 +1291,9 @@ canvas.addEventListener('pointermove', (e) => {
   pointer.dirty = true;
   pointer.inside = true;
 });
+// Touch pointers "leave" right after every lift (a finger can't hover), which
+// would hide a tapped part's tooltip the moment it appeared.
 canvas.addEventListener('pointerleave', (e) => {
-  // Touch fires pointerleave right after every tap; only a mouse leaving
-  // the canvas should clear the tooltip.
   if (grab || e.pointerType !== 'mouse') return;
   pointer.inside = false;
   showTip(null);
@@ -1266,6 +1301,11 @@ canvas.addEventListener('pointerleave', (e) => {
 
 let downAt = null;
 canvas.addEventListener('pointerdown', (e) => (downAt = { x: e.clientX, y: e.clientY }));
+// A touch anywhere off the machine (the controls card, the write-up) dismisses
+// a tapped part's tooltip; a mouse's hover tooltip already follows the cursor.
+window.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'mouse' && e.target !== canvas) showTip(null);
+});
 function endGrab(e) {
   if (!grab) return false;
   if (!grab.moved) {
@@ -1283,16 +1323,25 @@ canvas.addEventListener('pointercancel', endGrab);
 canvas.addEventListener('pointerup', (e) => {
   if (endGrab(e)) return;
   if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) >= 8) return; // a drag, not a click
-  const p = pick(e.clientX, e.clientY);
+  const p = pick(e.clientX, e.clientY, e.pointerType !== 'mouse');
   if (e.pointerType === 'mouse') {
     if (p && linksToText(p)) showInText(p);
     return;
   }
-  // Touch: the first tap shows the datasheet entry; tapping the same part
-  // again goes to where the text mentions it.
-  if (p && p === hovered && !tip.hidden && linksToText(p)) showInText(p);
-  else showTip(p, e.clientX, e.clientY - 120);
+  // Touch: the first tap shows the part's tooltip; tapping the same part
+  // again (soon after) goes to where the text mentions it. Remembered here
+  // rather than read off the tooltip, which every new touch on the machine
+  // hides as the camera control starts.
+  const now = performance.now();
+  if (p && lastTap.p === p && now - lastTap.t < 6000 && linksToText(p)) {
+    lastTap.p = null;
+    showInText(p);
+  } else {
+    showTip(p, e.clientX, e.clientY - 120);
+    Object.assign(lastTap, { p, t: now });
+  }
 });
+const lastTap = { p: null, t: 0 };
 
 /* ---------- linking the write-up and the machine ---------- */
 const INSIDE = new Set(['winding', 'spring']); // hidden under the casing until it's exploded
@@ -1330,9 +1379,8 @@ function showOnMachine(p) {
   clearTimeout(showTimer);
   showTimer = setTimeout(() => {
     machine.updateMatrixWorld();
-    const { w, h } = heroSize();
     const r = canvas.getBoundingClientRect();
-    const at = toScreen(new THREE.Vector3().copy(p.anchor).applyMatrix4(p.group.matrixWorld), w, h);
+    const at = toScreen(new THREE.Vector3().copy(p.anchor).applyMatrix4(p.group.matrixWorld), r.width, r.height);
     showTip(p, r.left + at.x, r.top + at.y);
     animate(p.fx.hover, { value: [1, 0.25, 1, 0.25, 1], duration: 1500, ease: 'inOutSine' });
     showTimer = setTimeout(() => {
@@ -1379,6 +1427,57 @@ new IntersectionObserver(([entry]) => {
   if (entry.intersectionRatio > 0.6) setReturnTo(null);
 }, { threshold: [0, 0.2, 0.6] }).observe(hero);
 
+/* ---------- keyboard and screen readers: step through the parts ----------
+ * With the machine focused (Tab to it, or click it), the arrow keys move the
+ * gold outline and tooltip from part to part; the tooltip is a live region,
+ * so each part's name and description is read out. A visually hidden list
+ * of every part gives screen readers the same information up front. */
+{
+  const list = document.createElement('ul');
+  list.className = 'sr-only';
+  list.setAttribute('aria-label', 'Parts of the machine');
+  for (const p of parts) {
+    const li = document.createElement('li');
+    li.textContent = p.info ? `${p.name}: ${p.info.replace(/\[\[|\]\]/g, '')}` : p.name;
+    list.append(li);
+  }
+  canvas.after(list);
+}
+canvas.tabIndex = 0;
+let tourAt = -1;
+const tourParts = () => parts.filter((p) => p.group.visible);
+function showTourPart() {
+  const list = tourParts();
+  const p = list[tourAt];
+  if (!p) return;
+  machine.updateMatrixWorld();
+  const r = canvas.getBoundingClientRect();
+  const a = toScreen(tmp.copy(p.anchor).applyMatrix4(p.group.matrixWorld), r.width, r.height);
+  showTip(p, r.left + a.x, r.top + a.y);
+}
+canvas.addEventListener('keydown', (e) => {
+  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+  if (step) {
+    e.preventDefault(); // don't scroll the page
+    finishIntro();
+    controls.autoRotate = false; // so the tooltip stays on its part
+    const n = tourParts().length;
+    tourAt = tourAt < 0 ? (step > 0 ? 0 : n - 1) : (tourAt + step + n) % n;
+    showTourPart();
+  } else if (e.key === 'Escape' && tourAt >= 0) {
+    e.stopPropagation(); // just end the tour, don't also show the controls
+    tourAt = -1;
+    showTip(null);
+  }
+});
+canvas.addEventListener('blur', () => {
+  if (tourAt < 0) return;
+  tourAt = -1;
+  showTip(null);
+});
+// A mouse or finger on the machine takes over from the keyboard tour.
+canvas.addEventListener('pointerdown', () => (tourAt = -1));
+
 /* ============================================================
  * Resize
  * ========================================================== */
@@ -1389,7 +1488,9 @@ const view = { ox: 0, oy: 0 };
 let fitTween = null;
 function applyView() {
   const { w, h } = heroSize();
-  camera.setViewOffset(w, h, view.ox, view.oy, w, h);
+  // A view window as tall as the canvas over a frame as tall as the hero: the
+  // hero part is unchanged and the tail below it just shows more of the sky.
+  camera.setViewOffset(w, h, view.ox, view.oy, w, canvasH());
   camera.updateProjectionMatrix();
 }
 const setDistance = (d) => camera.position.sub(controls.target).setLength(d).add(controls.target);
@@ -1423,7 +1524,9 @@ function fit({ smooth = false, at } = {}) {
 let fitted = false;
 function resize() {
   const { w, h } = heroSize();
-  renderer.setSize(w, h, false);
+  renderer.setSize(w, canvasH(), false);
+  // Fade from a little above the hero's bottom edge to the end of the tail.
+  starFade.value = (canvasH() - h + 60) * DPR;
   renderer.getDrawingBufferSize(U.uView.value);
   camera.aspect = w / h;
   sizeScope();
@@ -1552,7 +1655,7 @@ function frame() {
   machine.updateMatrixWorld();
 
   // dashed gold leader lines, pointing away from the machine's center
-  const { w: W, h: H } = heroSize();
+  const W = hero.clientWidth, H = canvasH();
   const c = toScreen(ctr.set(0, -0.3, 0).applyMatrix4(machine.matrixWorld), W, H);
   for (const l of labels) {
     if (l.s.o <= 0.001 || !l.p.group.visible) {
