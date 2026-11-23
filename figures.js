@@ -407,6 +407,24 @@ function stringFigure() {
  * Videos: load YouTube's player only when asked
  * ========================================================== */
 function videos() {
+  // A ▶ in the timeline: bring its video into view and outline it briefly.
+  // (Without JavaScript it's a plain #film-<id> link.)
+  for (const a of document.querySelectorAll('a.tl-play')) {
+    a.addEventListener('click', (e) => {
+      const card = document.querySelector(a.getAttribute('href'));
+      if (!card) return;
+      e.preventDefault();
+      card.scrollIntoView({ block: 'center' });
+      card.classList.remove('flash');
+      void card.offsetWidth; // restart the animation
+      card.classList.add('flash');
+      card.querySelector('a.yt, iframe')?.focus({ preventScroll: true });
+    });
+  }
+  // (the outline animates on the thumbnail inside the card)
+  document.addEventListener('animationend', (e) => {
+    if (e.animationName === 'video-flash') e.target.closest('.video')?.classList.remove('flash');
+  });
   for (const a of document.querySelectorAll('a.yt[data-yt]')) {
     a.addEventListener('click', (e) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return; // let "open in new tab" work

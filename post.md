@@ -14,6 +14,17 @@ The text is older than the sheet. It was written by a British engineering studen
 
 @include partials/timeline.html
 
+### On film {#film}
+
+Four of those performances are on YouTube, along with two later cuts of Haggart's. The ▶ in the timeline jumps to each one.
+
+@youtube Ac7G7xOG2Ag [c. 1977] "Turbo Encabulator", the original, with Bud Haggart. Uploaded by its director, Dave Rondot.
+@youtube lVZ8Ko-nss4 Rockwell Turbo Encabulator, with Bud Haggart and a narrated history added.
+@youtube MXW0bx_Ooq4 [c. 1988] Chrysler Turbo Encabulator, with Bud Haggart as "Mastertech" and a faux diagnostic procedure.
+@youtube UyRllRWfLJE Chrysler Turbo Encabulator, a newer version with Bud Haggart ("Viper Automotive Mastertech Tips").
+@youtube RXJKdh1KZ0w [1997] Rockwell Retro Encabulator, with Mike Kraft.
+@youtube 5nKk_-Lvhzo [2022] SANS ICS HyperEncabulator, with Mike Kraft.
+
 Here's the text as it's usually passed around. The part names link to the machine: hover one to light it up, or click it to jump up and see it. Clicking a part on the machine brings you back here.
 
 > For a number of years now, work has been proceeding in order to bring perfection to the crudely conceived idea of a transmission that would not only supply [inverse reactive current](#part:panel) for use in unilateral phase detractors, but would also be capable of automatically synchronizing [cardinal grammeters](#part:panel). Such an instrument is the turbo encabulator.
@@ -115,17 +126,6 @@ The datasheet has opinions about waveforms, so the selector does more than resha
 | Cosinusoidal | Drives from the opposite end. The sheet says cosine-wave directors must feed a Phase Inverter first, so until you fit one the drive is garbled, the amber lamp blinks and realization collapses to 31%. |
 | Tangential | Every asymptote pegs the inrush needle, rattles the tremie pipes and flashes the red lamp. |
 | Pipusoidal | The pentametric fan surges on each pip, and the machine shudders with it. |
-
-## On film {#film}
-
-The text has been performed on camera several times, always with a straight face. Bud Haggart made the first film around 1977 and reprised the role for Rockwell and Chrysler; Mike Kraft took over for Rockwell's Retro Encabulator in 1997 and SANS's HyperEncabulator in 2022.
-
-@youtube Ac7G7xOG2Ag "Turbo Encabulator", the original (c. 1977), with Bud Haggart. Uploaded by its director, Dave Rondot.
-@youtube lVZ8Ko-nss4 Rockwell Turbo Encabulator, with Bud Haggart and a narrated history added.
-@youtube MXW0bx_Ooq4 Chrysler Turbo Encabulator, with Bud Haggart as "Mastertech" and a faux diagnostic procedure.
-@youtube UyRllRWfLJE Chrysler Turbo Encabulator, a newer version with Bud Haggart ("Viper Automotive Mastertech Tips").
-@youtube RXJKdh1KZ0w Rockwell Retro Encabulator (1997), with Mike Kraft.
-@youtube 5nKk_-Lvhzo SANS ICS HyperEncabulator (2022), with Mike Kraft.
 
 ## Credits {#credits}
 

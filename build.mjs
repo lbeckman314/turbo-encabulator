@@ -7,8 +7,10 @@
 // Markdown extras:
 //   front matter      title, date (YYYY-MM-DD) and tags (comma-separated)
 //   @include <path>   on its own line: pastes in an HTML partial (figures etc.)
-//   @youtube <id> <caption>  one per line; consecutive lines form a grid of
-//                     click-to-load videos (thumbnail until played)
+//   @youtube <id> [date] <caption>  one per line; consecutive lines form a
+//                     grid of click-to-load videos (thumbnail until played),
+//                     each with id="film-<id>"; the optional [date] is shown
+//                     as a chip, to match the video to its timeline entry
 //   ::: callout Label  a boxed aside with a label, closed by :::
 //   ## Heading {#id}  sets the heading's id
 // Raw HTML (e.g. <var>) is allowed anywhere.
@@ -58,12 +60,16 @@ function frontMatter(text) {
 function video(id, caption) {
   if (!/^[\w-]{11}$/.test(id)) throw new Error(`@youtube: "${id}" isn't a video id`);
   const plain = md.utils.escapeHtml(caption.replace(/[*_`]/g, ''));
-  return `<figure class="video">
+  // A leading [date] in the caption becomes a chip tying it to the timeline.
+  const m = caption.match(/^\[([^\]]+)\]\s*(.*)$/);
+  const chip = m ? `<span class="video-date">${md.utils.escapeHtml(m[1])}</span> ` : '';
+  if (m) caption = m[2];
+  return `<figure class="video" id="film-${id}">
   <a class="yt" href="https://www.youtube.com/watch?v=${id}" data-yt="${id}" target="_blank" rel="noopener" aria-label="Play video: ${plain}">
     <img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy" width="480" height="360" />
-    <span class="yt-play" aria-hidden="true"></span>
+    <span class="yt-play" aria-hidden="true">Watch</span>
   </a>
-  <figcaption>${md.renderInline(caption)}</figcaption>
+  <figcaption>${chip}${md.renderInline(caption)}</figcaption>
 </figure>`;
 }
 
